@@ -5,20 +5,11 @@
  * Re-export from generated types for easier imports.
  */
 
+// Re-export commonly used generated types with correct names
 export type {
-  // Auth types
-  LoginRequest,
-  LoginResponse,
-  RegisterRequest,
-  RegisterResponse,
-  
-  // User types
+  // Auth response shapes
+  Login,
+  Register,
+  // User entity
   User,
-  
-  // Common types
-  ApiError,
-  ApiResponse,
 } from './generated/types';
-
-// Re-export all paths and components for advanced usage
-export type { paths, components } from './generated/types';
