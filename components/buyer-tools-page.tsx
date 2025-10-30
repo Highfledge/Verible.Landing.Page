@@ -82,9 +82,9 @@ export function BuyerToolsPage() {
     try {
       let response
       if (isLoggedIn) {
-        response = await sellersAPI.extractProfile({ url: sellerUrl })
+        response = await sellersAPI.extractProfile({ profileUrl: sellerUrl })
       } else {
-        response = await sellersAPI.scoreByUrl({ url: sellerUrl })
+        response = await sellersAPI.scoreByUrl({ profileUrl: sellerUrl })
       }
 
       const apiData = response?.data
