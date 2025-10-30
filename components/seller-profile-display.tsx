@@ -3,19 +3,13 @@
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { 
-  User, 
   MapPin, 
-  Star, 
   Shield, 
   Clock, 
   TrendingUp, 
   AlertTriangle, 
   CheckCircle, 
   XCircle,
-  Eye,
-  MessageSquare,
-  Heart,
-  Calendar,
   BarChart3
 } from "lucide-react"
 import Image from "next/image"
@@ -140,22 +134,25 @@ export function SellerProfileDisplay({ data, isLoggedIn }: SellerProfileDisplayP
         {/* Trust Score Breakdown */}
         <div className="mt-6 space-y-3">
           <h5 className="font-medium text-gray-900">Trust Score Breakdown</h5>
-          {Object.entries(scoringResult.trustIndicators).map(([key, value]) => (
-            <div key={key} className="flex items-center justify-between">
-              <span className="text-sm text-gray-600 capitalize">
-                {key.replace(/([A-Z])/g, ' $1').trim()}
-              </span>
-              <div className="flex items-center space-x-2">
-                <div className="w-24 bg-gray-200 rounded-full h-2">
-                  <div 
-                    className="bg-blue-600 h-2 rounded-full" 
-                    style={{ width: `${parseInt(value as string)}%` }}
-                  ></div>
+          {(Object.entries((scoringResult?.trustIndicators ?? {}) as Record<string, string | number>) as [string, string | number][])?.map(([key, value]) => {
+            const percent = typeof value === 'number' ? value : parseInt(String(value)) || 0
+            return (
+              <div key={key} className="flex items-center justify-between">
+                <span className="text-sm text-gray-600 capitalize">
+                  {key.replace(/([A-Z])/g, ' $1').trim()}
+                </span>
+                <div className="flex items-center space-x-2">
+                  <div className="w-24 bg-gray-200 rounded-full h-2">
+                    <div 
+                      className="bg-blue-600 h-2 rounded-full" 
+                      style={{ width: `${percent}%` }}
+                    ></div>
+                  </div>
+                  <span className="text-sm font-medium text-gray-900">{String(value)}</span>
                 </div>
-                <span className="text-sm font-medium text-gray-900">{value}</span>
               </div>
-            </div>
-          ))}
+            )
+          })}
         </div>
       </div>
 
