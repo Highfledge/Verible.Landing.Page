@@ -1,0 +1,10 @@
+{
+  "openapi-typescript": {
+    "input": "${NEXT_PUBLIC_API_URL}/openapi.json",
+    "output": "./lib/api/generated/types.ts",
+    "options": {
+      "export": true,
+      "transform": true
+    }
+  }
+}
