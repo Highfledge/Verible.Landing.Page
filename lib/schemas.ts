@@ -15,15 +15,11 @@ export const signupSchema = z.object({
     .regex(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]/, 
       "Password must contain at least one uppercase letter, one lowercase letter, one number, and one special character"),
   confirmPassword: z.string(),
-  role: z.enum(["buyer", "seller"], {
-    required_error: "Please select a role",
-  }),
+  role: z.enum(["buyer", "seller"], { message: "Please select a role" }),
   phone: z.string()
     .min(10, "Phone number must be at least 10 digits")
     .regex(/^\+?[\d\s\-\(\)]+$/, "Please enter a valid phone number"),
-  verificationMethod: z.enum(["email", "sms"], {
-    required_error: "Please select a verification method",
-  }),
+  verificationMethod: z.enum(["email", "sms"], { message: "Please select a verification method" }),
   termsAccepted: z.boolean().refine(val => val === true, {
     message: "You must accept the terms and conditions",
   }),
@@ -46,9 +42,7 @@ export type VerifyEmailFormData = z.infer<typeof verifyEmailSchema>
 
 export const forgotPasswordSchema = z.object({
   emailOrPhone: z.string().min(1, "Email or phone is required"),
-  method: z.enum(["email", "sms"], {
-    required_error: "Please select a verification method",
-  }),
+  method: z.enum(["email", "sms"], { message: "Please select a verification method" }),
 })
 
 export type ForgotPasswordFormData = z.infer<typeof forgotPasswordSchema>
