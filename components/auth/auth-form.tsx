@@ -51,65 +51,58 @@ export function AuthForm({ mode }: AuthFormProps) {
     },
   })
   const onSubmit = async (data: LoginFormData | SignupFormData) => {
-    console.log("onSubmit called with mode:", mode, "data:", data)
     setIsLoading(true)
-    
     try {
-        if (mode === "login") {
-          const loginData = data as LoginFormData
-          console.log("Attempting login for:", loginData.email)
-          
-          const response = await authAPI.login({
-            emailOrPhone: loginData.email,
-            password: loginData.password
-          })
-          
-          console.log("Login response:", response)
-          
-          // Store token and user data in Zustand store
-          if (response.data.token && response.data.user) {
-            login(response.data.token, response.data.user)
-            toast.success("Login successful!")
-            router.push("/")
-          } else {
-            toast.error("Login failed. Please try again.")
-          }
-        
+      if (mode === "login") {
+        const loginData = data as LoginFormData
+        const response = await authAPI.login({
+          emailOrPhone: loginData.email,
+          password: loginData.password
+        })
+        // Store token and user data in Zustand store
+        if (response.data.token && response.data.user) {
+          login(response.data.token, response.data.user)
+          toast.success("Login successful!")
+          router.push("/")
         } else {
-          const signupData = data as SignupFormData
-          console.log("Attempting signup for:", signupData.email)
-          
-          // Call register API
-          const response = await authAPI.register({
-            name: `${signupData.firstName} ${signupData.lastName}`,
-            email: signupData.email,
-            password: signupData.password,
-            role: signupData.role === "buyer" ? "user" : signupData.role,
-            phone: signupData.phone,
-            verificationMethod: signupData.verificationMethod
-          })
-          
-          console.log("Signup response:", response)
-          
-          // Store token and user data if provided
-          if (response.data.token && response.data.user) {
-            login(response.data.token, response.data.user)
-          }
-          
-          toast.success("Account created successfully! Please verify your email.")
-          
-          // Redirect to verification page with email/phone
-          const emailOrPhone = signupData.email || signupData.phone
-          router.push(`/verify?email=${encodeURIComponent(emailOrPhone)}`)
+          toast.error("Login failed. Please try again.")
         }
+      
+      } else {
+        const signupData = data as SignupFormData
+        // Call register API
+        const response = await authAPI.register({
+          name: `${signupData.firstName} ${signupData.lastName}`,
+          email: signupData.email,
+          password: signupData.password,
+          role: signupData.role === "buyer" ? "user" : signupData.role,
+          phone: signupData.phone,
+          verificationMethod: signupData.verificationMethod
+        })
+
+        console.log(response, "+++++++")
+        console.log(signupData, "+++++++")
+        
+        // Store token and user data if provided
+        if (response.data.token && response.data.user) {
+          login(response.data.token, response.data.user)
+        }
+        toast.success("Account created successfully! Please verify your email.")
+        
+        // Redirect to verification page with email/phone and verification code
+        const emailOrPhone = signupData.email || signupData.phone
+        const verificationCode = response.data?.verificationCode || response.verificationCode
+        const verifyUrl = verificationCode 
+          ? `/verify?email=${encodeURIComponent(emailOrPhone)}&code=${encodeURIComponent(verificationCode)}`
+          : `/verify?email=${encodeURIComponent(emailOrPhone)}`
+        router.push(verifyUrl)
+      }
     } catch (error: any) {
       console.error("Auth error:", error)
+      const errorMessage = error.response?.data?.message || "An error occurred. Please try again."
       
-      // Handle unverified account (401 status) - only for login mode
-      if (mode === "login" && error.response?.status === 401 && error.response?.data?.message === "Please verify your account") {
-        toast.error("Please verify your account first")
-        
-        // Get email from login data
+      // Handle unverified account - only for login mode
+      if (mode === "login" && error.response?.data?.message === "Please verify your account") {
         const loginData = data as LoginFormData
         const email = loginData.email
         
@@ -129,7 +122,6 @@ export function AuthForm({ mode }: AuthFormProps) {
         }
       } else {
         // Handle other errors
-        const errorMessage = error.response?.data?.message || "An error occurred. Please try again."
         toast.error(errorMessage)
       }
     } finally {
@@ -179,10 +171,7 @@ export function AuthForm({ mode }: AuthFormProps) {
 
             {/* Login Form */}
             <TabsContent value="login">
-              <form onSubmit={(e) => {
-                e.preventDefault()
-                loginForm.handleSubmit(onSubmit)()
-              }} className="space-y-6">
+              <form onSubmit={loginForm.handleSubmit(onSubmit)} className="space-y-6">
                 {/* Email */}
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -260,10 +249,7 @@ export function AuthForm({ mode }: AuthFormProps) {
 
             {/* Signup Form */}
             <TabsContent value="signup">
-              <form onSubmit={(e) => {
-                e.preventDefault()
-                signupForm.handleSubmit(onSubmit)()
-              }} className="space-y-6">
+              <form onSubmit={signupForm.handleSubmit(onSubmit)} className="space-y-6">
                 {/* First Name and Last Name */}
                 <div className="grid grid-cols-2 gap-4">
                   <div>

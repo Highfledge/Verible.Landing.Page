@@ -33,14 +33,28 @@ apiClient.interceptors.response.use(
   (error) => {
     // Handle common errors
     if (error.response?.status === 401) {
-      // Unauthorized - clear auth and redirect to login
-      if (typeof window !== 'undefined') {
-        // Clear auth store
+      const requestUrl = error.config?.url || ''
+      // Check if this is an auth endpoint (login, register, verify, password reset)
+      const isAuthEndpoint = requestUrl.includes('/api/auth/login') || 
+                            requestUrl.includes('/api/auth/register') ||
+                            requestUrl.includes('/api/auth/verify') ||
+                            requestUrl.includes('/api/auth/password/forgot') ||
+                            requestUrl.includes('/api/auth/password/reset')
+      
+      // Check if user has a token (meaning they were logged in)
+      const token = getStoredToken()
+      
+      // Only redirect if:
+      // 1. User has a token (was logged in) - token expired scenario
+      // 2. It's NOT an auth endpoint (if it's an auth endpoint, they're already trying to authenticate)
+      if (token && !isAuthEndpoint && typeof window !== 'undefined') {
+        // User was logged in but token expired - redirect to login
         import('../stores/auth-store').then(({ useAuthStore }) => {
           useAuthStore.getState().clearAuth()
         })
         window.location.href = '/auth?mode=login'
       }
+      // If no token or it's an auth endpoint, don't redirect - let the component handle the error
     }
     return Promise.reject(error)
   }

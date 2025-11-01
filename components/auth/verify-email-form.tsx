@@ -23,11 +23,12 @@ export function VerifyEmailForm() {
   const [verificationSuccess, setVerificationSuccess] = useState(false)
 
   const emailOrPhone = searchParams.get("email") || searchParams.get("phone") || ""
+  const verificationCodeFromUrl = searchParams.get("code") || ""
 
   const form = useForm<VerifyEmailFormData>({
     resolver: zodResolver(verifyEmailSchema),
     defaultValues: {
-      code: "",
+      code: verificationCodeFromUrl,
       emailOrPhone: emailOrPhone,
     },
   })
@@ -36,7 +37,10 @@ export function VerifyEmailForm() {
     if (emailOrPhone) {
       form.setValue("emailOrPhone", emailOrPhone)
     }
-  }, [emailOrPhone, form])
+    if (verificationCodeFromUrl) {
+      form.setValue("code", verificationCodeFromUrl)
+    }
+  }, [emailOrPhone, verificationCodeFromUrl, form])
 
   const onSubmit = async (data: VerifyEmailFormData) => {
     setIsLoading(true)
@@ -142,6 +146,23 @@ export function VerifyEmailForm() {
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
             {/* Email/Phone Display (hidden input) */}
             <input type="hidden" {...form.register("emailOrPhone")} />
+
+            {/* Display verification code if provided from signup */}
+            {verificationCodeFromUrl && (
+              <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
+                <p className="text-sm text-gray-700 text-center mb-2">
+                  Your verification code:
+                </p>
+                <div className="flex items-center justify-center">
+                  <span className="text-2xl font-bold text-blue-600 tracking-wider">
+                    {verificationCodeFromUrl}
+                  </span>
+                </div>
+                <p className="text-xs text-gray-500 text-center mt-2">
+                  You can enter this code manually below
+                </p>
+              </div>
+            )}
 
             {/* 6-Digit Code Input */}
             <div>

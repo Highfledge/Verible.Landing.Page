@@ -53,10 +53,6 @@ type FilterType = "top" | "all"
 
 export function SellersSection() {
   const { isLoggedIn, user } = useAuth()
-  // Only show to logged-in buyers
-  if (!isLoggedIn || user?.role !== 'user') {
-    return null
-  }
   const [filter, setFilter] = useState<FilterType>("top")
   const [searchQuery, setSearchQuery] = useState("")
   const [sellers, setSellers] = useState<Seller[]>([])
@@ -136,6 +132,11 @@ export function SellersSection() {
     // TODO: Navigate to seller profile page
     console.log("View profile for:", seller.profileData.name)
     toast.info(`Viewing profile for ${seller.profileData.name}`)
+  }
+
+  // Only show to logged-in buyers
+  if (!isLoggedIn || user?.role !== 'user') {
+    return null
   }
 
   return (

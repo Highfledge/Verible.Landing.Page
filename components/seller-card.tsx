@@ -66,7 +66,6 @@ export function SellerCard({ seller, onViewProfile }: SellerCardProps) {
   const [showEndorseForm, setShowEndorseForm] = useState(false)
   const [endorseReason, setEndorseReason] = useState("")
   const [isEndorsing, setIsEndorsing] = useState(false)
-
   const getScoreColor = (score: number) => {
     if (score >= 80) return "text-green-600"
     if (score >= 60) return "text-yellow-600"
@@ -128,6 +127,7 @@ export function SellerCard({ seller, onViewProfile }: SellerCardProps) {
     }
   }
 
+  console.log(seller.listingHistory, "+++++++")
   return (
     <div className="bg-white border border-gray-200 rounded-xl p-6 hover:shadow-lg transition-shadow duration-200">
       {/* Header */}
