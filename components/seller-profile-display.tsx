@@ -12,7 +12,8 @@ import {
   XCircle,
   BarChart3
 } from "lucide-react"
-import Image from "next/image"
+import { ImageWithFallback } from "@/components/ui/image-with-fallback"
+import { cleanText } from "@/lib/utils/clean-data"
 
 interface SellerProfileDisplayProps {
   data: any
@@ -52,12 +53,13 @@ export function SellerProfileDisplay({ data, isLoggedIn }: SellerProfileDisplayP
         <div className="flex items-start space-x-4">
           {/* Profile Picture */}
           <div className="relative">
-            <Image
-              src={seller.profileData.profilePicture || "/default-avatar.png"}
-              alt={seller.profileData.name}
+            <ImageWithFallback
+              src={seller.profileData.profilePicture}
+              alt={seller.profileData.name || "Seller"}
               width={80}
               height={80}
-              className="w-20 h-20 rounded-full object-cover border-2 border-gray-200"
+              className="rounded-full object-cover border-2 border-gray-200"
+              fallbackLetter={seller.profileData.name?.charAt(0) || "S"}
             />
             <div className="absolute -bottom-1 -right-1 w-6 h-6 bg-blue-500 rounded-full flex items-center justify-center">
               <Shield className="w-3 h-3 text-white" />
@@ -67,7 +69,7 @@ export function SellerProfileDisplay({ data, isLoggedIn }: SellerProfileDisplayP
           {/* Seller Info */}
           <div className="flex-1">
             <div className="flex items-center space-x-3 mb-2">
-              <h3 className="text-2xl font-bold text-gray-900">{seller.profileData.name}</h3>
+              <h3 className="text-2xl font-bold text-gray-900">{cleanText(seller.profileData.name)}</h3>
               <Badge 
                 variant={seller.verificationStatus === "verified" ? "success" : "outline"}
                 className="text-xs"
@@ -79,7 +81,7 @@ export function SellerProfileDisplay({ data, isLoggedIn }: SellerProfileDisplayP
             <div className="flex items-center space-x-4 text-sm text-gray-600 mb-3">
               <div className="flex items-center space-x-1">
                 <MapPin className="w-4 h-4" />
-                <span>{seller.profileData.location || "Location not specified"}</span>
+                <span>{cleanText(seller.profileData.location) || "Location not specified"}</span>
               </div>
               <div className="flex items-center space-x-1">
                 <Clock className="w-4 h-4" />
@@ -88,7 +90,7 @@ export function SellerProfileDisplay({ data, isLoggedIn }: SellerProfileDisplayP
             </div>
 
             {seller.profileData.bio && (
-              <p className="text-gray-700 text-sm leading-relaxed">{seller.profileData.bio}</p>
+              <p className="text-gray-700 text-sm leading-relaxed">{cleanText(seller.profileData.bio)}</p>
             )}
           </div>
 

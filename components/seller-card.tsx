@@ -21,6 +21,8 @@ import {
   ThumbsUp
 } from "lucide-react"
 import Image from "next/image"
+import { ImageWithFallback } from "@/components/ui/image-with-fallback"
+import { cleanText } from "@/lib/utils/clean-data"
 
 interface Seller {
   _id: string
@@ -134,12 +136,13 @@ export function SellerCard({ seller, onViewProfile }: SellerCardProps) {
       <div className="flex items-start space-x-4 mb-4">
         {/* Profile Picture */}
         <div className="relative">
-          <Image
-            src={seller.profileData.profilePicture || "/default-avatar.png"}
-            alt={seller.profileData.name}
+          <ImageWithFallback
+            src={seller.profileData.profilePicture}
+            alt={seller.profileData.name || "Seller"}
             width={60}
             height={60}
-            className="w-15 h-15 rounded-full object-cover border-2 border-gray-200"
+            className="rounded-full object-cover border-2 border-gray-200"
+            fallbackLetter={seller.profileData.name?.charAt(0) || "S"}
           />
           {(seller.verificationStatus === "verified" || seller.verificationStatus === "id-verified") && (
             <div className="absolute -bottom-1 -right-1 w-5 h-5 bg-blue-500 rounded-full flex items-center justify-center">
@@ -151,7 +154,7 @@ export function SellerCard({ seller, onViewProfile }: SellerCardProps) {
         {/* Seller Info */}
         <div className="flex-1 min-w-0">
           <div className="flex items-center space-x-2 mb-1">
-            <h3 className="text-lg font-semibold text-gray-900 truncate">{seller.profileData.name}</h3>
+            <h3 className="text-lg font-semibold text-gray-900 truncate">{cleanText(seller.profileData.name)}</h3>
             <Badge 
               variant={seller.verificationStatus === "verified" || seller.verificationStatus === "id-verified" ? "success" : "outline"}
               className="text-xs"
@@ -167,10 +170,10 @@ export function SellerCard({ seller, onViewProfile }: SellerCardProps) {
           
           <div className="flex items-center space-x-2 text-sm text-gray-600 mb-2">
             <MapPin className="w-4 h-4" />
-            <span className="truncate">{seller.profileData.location}</span>
+            <span className="truncate">{cleanText(seller.profileData.location)}</span>
           </div>
 
-          <p className="text-sm text-gray-600 line-clamp-2">{seller.profileData.bio}</p>
+          <p className="text-sm text-gray-600 line-clamp-2">{cleanText(seller.profileData.bio)}</p>
         </div>
 
         {/* Pulse Score */}

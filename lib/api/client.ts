@@ -202,6 +202,30 @@ export const sellersAPI = {
   becomeSeller: async (payload: { platform: string; profileUrl: string }) => {
     const response = await apiClient.post('/api/sellers/become-seller', payload)
     return response.data
+  },
+
+  // Get seller feedback (flags and endorsements)
+  getSellerFeedback: async (sellerId: string) => {
+    const response = await apiClient.get(`/api/sellers/${sellerId}/feedback`)
+    return response.data
+  },
+
+  // Get seller analytics
+  getSellerAnalytics: async (sellerId: string) => {
+    const response = await apiClient.get(`/api/sellers/${sellerId}/analytics`)
+    return response.data
+  },
+
+  // Update seller profile
+  updateSellerProfile: async (payload: { profileData: { name: string; location?: string; bio?: string } }) => {
+    const response = await apiClient.put('/api/sellers/profile', payload)
+    return response.data
+  },
+
+  // Get current user's seller profile (to get seller ID)
+  getMySellerProfile: async () => {
+    const response = await apiClient.get('/api/sellers/my-profile')
+    return response.data
   }
 }
 

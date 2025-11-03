@@ -21,9 +21,8 @@ interface AuthFormProps {
 
 export function AuthForm({ mode }: AuthFormProps) {
   const router = useRouter()
-  const { login, setLoading } = useAuth()
+  const { login } = useAuth()
   const [showPassword, setShowPassword] = useState(false)
-  const [tab, setTab] = useState(mode)
   const [showConfirmPassword, setShowConfirmPassword] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
 
@@ -80,9 +79,6 @@ export function AuthForm({ mode }: AuthFormProps) {
           verificationMethod: signupData.verificationMethod
         })
 
-        console.log(response, "+++++++")
-        console.log(signupData, "+++++++")
-        
         // Store token and user data if provided
         if (response.data.token && response.data.user) {
           login(response.data.token, response.data.user)

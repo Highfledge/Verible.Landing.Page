@@ -1,5 +1,7 @@
 import { Header } from "@/components/header";
 import { HeroSection } from "@/components/hero-section";
+import { QuickActions } from "@/components/quick-actions";
+import { DashboardSections } from "@/components/dashboard-sections";
 import { SellersSection } from "@/components/sellers-section";
 import { CTASection } from "@/components/cta-section";
 import { Footer } from "@/components/footer";
@@ -10,6 +12,8 @@ export default function Home() {
     <div className="min-h-screen bg-white">
       <Header />
       <HeroSection />
+      <QuickActions />
+      <DashboardSections />
       <SellersSection />
       <CTASection />
       <Footer />

@@ -45,8 +45,6 @@ export function VerifyEmailForm() {
   const onSubmit = async (data: VerifyEmailFormData) => {
     setIsLoading(true)
     try {
-      console.log("Verification data:", data)
-      
       // Call verify API
       const response = await authAPI.verify({
         code: data.code,

@@ -3,8 +3,12 @@
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { ArrowRight, Download, Play, Search } from "lucide-react"
+import { useAuth } from "@/lib/stores/auth-store"
 
 export function HeroSection() {
+  const { user, isLoggedIn } = useAuth()
+  const isSeller = user?.role === "seller"
+
   return (
     <div className="w-full px-6 py-12 bg-gradient-to-br from-blue-50 via-white to-yellow-50 animate-in fade-in duration-1000">
       <div className="max-w-7xl mx-auto">
@@ -19,27 +23,50 @@ export function HeroSection() {
             {/* Headline */}
             <div className="space-y-4">
             <h1 className="text-5xl lg:text-6xl font-bold text-gray-900 leading-tight">
-              <span className="block">Shop with</span>
-              <span className="block text-[#D59B0D]">Confidence</span>
-              <span className="block">Safely</span>
+              {isSeller ? (
+                <>
+                  <span className="block">Build</span>
+                  <span className="block text-[#D59B0D]">Trust</span>
+                  <span className="block">Grow Sales</span>
+                </>
+              ) : (
+                <>
+                  <span className="block">Shop with</span>
+                  <span className="block text-[#D59B0D]">Confidence</span>
+                  <span className="block">Safely</span>
+                </>
+              )}
             </h1>
               
               <p className="text-xl text-gray-600 leading-relaxed max-w-lg">
-                Instant marketplace seller verification and trust scores for safer transactions.{" "}
-                <span className="text-[#1D2973] font-semibold">
-                  Say goodbye to scams, hello to safe shopping.
-                </span>
+                {isSeller ? (
+                  <>
+                    Build trust and grow your business with instant seller verification and trust scores.{" "}
+                    <span className="text-[#1D2973] font-semibold">
+                      Get verified, earn buyer confidence, and boost your sales.
+                    </span>
+                  </>
+                ) : (
+                  <>
+                    Instant marketplace seller verification and trust scores for safer transactions.{" "}
+                    <span className="text-[#1D2973] font-semibold">
+                      Say goodbye to scams, hello to safe shopping.
+                    </span>
+                  </>
+                )}
               </p>
             </div>
 
             {/* CTA Buttons */}
             <div className="flex flex-col sm:flex-row gap-4">
-              <Button variant="primary" size="xl" className="flex items-center space-x-2 hover:shadow-lg transition-all duration-300" asChild>
-                <a href="/auth?mode=signup">
-                  <span>Get Started</span>
-                  <ArrowRight className="w-5 h-5" />
-                </a>
-              </Button>
+              {!isLoggedIn && (
+                <Button variant="primary" size="xl" className="flex items-center space-x-2 hover:shadow-lg transition-all duration-300" asChild>
+                  <a href="/auth?mode=signup">
+                    <span>Get Started</span>
+                    <ArrowRight className="w-5 h-5" />
+                  </a>
+                </Button>
+              )}
               
               <Button variant="secondary" size="xl" className="flex items-center space-x-2 hover:shadow-lg transition-all duration-300">
                 <Download className="w-5 h-5" />

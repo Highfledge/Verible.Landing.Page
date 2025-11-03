@@ -61,3 +61,23 @@ export const resetPasswordSchema = z.object({
 })
 
 export type ResetPasswordFormData = z.infer<typeof resetPasswordSchema>
+
+export const businessInformationSchema = z.object({
+  businessName: z.string().min(1, "Business/Store Name is required"),
+  contactEmail: z.string().email("Please enter a valid email address"),
+  phoneNumber: z.string()
+    .min(10, "Phone number must be at least 10 digits")
+    .regex(/^\+?[\d\s\-\(\)]+$/, "Please enter a valid phone number")
+    .optional()
+    .or(z.literal("")),
+  websiteUrl: z.string()
+    .url("Please enter a valid URL")
+    .optional()
+    .or(z.literal("")),
+  businessDescription: z.string().optional(),
+  businessType: z.enum(["Individual Seller", "Small Business", "Corporation", "Non-Profit"], {
+    message: "Please select a business type"
+  }),
+})
+
+export type BusinessInformationFormData = z.infer<typeof businessInformationSchema>

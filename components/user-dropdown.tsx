@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button"
 import { User, LogOut, Settings, ChevronDown, Store, X, Loader2 } from "lucide-react"
 import Image from "next/image"
 import { Input } from "@/components/ui/input"
+import { Textarea } from "@/components/ui/textarea"
 import { toast } from "sonner"
 import { sellersAPI, usersAPI, authAPI } from "@/lib/api/client"
 
@@ -21,16 +22,22 @@ export function UserDropdown() {
   const [submitting, setSubmitting] = useState(false)
   const [showSettings, setShowSettings] = useState(false)
   const [activeSettingsTab, setActiveSettingsTab] = useState<
-    "my-profile" | "update-profile" | "change-password" | "my-interactions" | "my-feedbacks" | "delete-account"
+    "my-profile" | "update-profile" | "change-password" | "my-interactions" | "my-analytics" | "my-feedbacks" | "delete-account"
   >("my-profile")
   const [profileName, setProfileName] = useState("")
   const [updatingProfile, setUpdatingProfile] = useState(false)
+  const [sellerProfileName, setSellerProfileName] = useState("")
+  const [sellerLocation, setSellerLocation] = useState("")
+  const [sellerBio, setSellerBio] = useState("")
   const [feedbacks, setFeedbacks] = useState<any[] | null>(null)
   const [loadingFeedbacks, setLoadingFeedbacks] = useState(false)
   const [feedbackError, setFeedbackError] = useState<string | null>(null)
   const [interactions, setInteractions] = useState<{ flagged: any[]; endorsed: any[] } | null>(null)
   const [loadingInteractions, setLoadingInteractions] = useState(false)
   const [interactionsError, setInteractionsError] = useState<string | null>(null)
+  const [analytics, setAnalytics] = useState<any | null>(null)
+  const [loadingAnalytics, setLoadingAnalytics] = useState(false)
+  const [analyticsError, setAnalyticsError] = useState<string | null>(null)
   const [profileData, setProfileData] = useState<any | null>(null)
   const [loadingProfile, setLoadingProfile] = useState(false)
   const [profileError, setProfileError] = useState<string | null>(null)
@@ -71,10 +78,46 @@ export function UserDropdown() {
       setLoadingFeedbacks(true)
       setFeedbackError(null)
       try {
-        const res = await usersAPI.getMyFeedback()
-        // Expecting res.data.feedbackHistory or res.data depending on backend shape
-        const list = res?.data?.feedbackHistory || res?.data || []
-        setFeedbacks(Array.isArray(list) ? list : [])
+        // Check if user is a seller
+        if (user?.role === "seller") {
+          // For sellers, get their seller profile first to get seller ID
+          try {
+            const sellerProfileRes = await sellersAPI.getMySellerProfile()
+            console.log("+++++++", sellerProfileRes)
+            const sellerId = sellerProfileRes?.data?._id || sellerProfileRes?.data?.seller?._id || sellerProfileRes?._id
+            
+            //const sellerId = "68fb8d9ad8299bdd94be605d";
+            if (!sellerId) {
+              throw new Error("Seller profile not found. Please claim your seller profile first.")
+            }
+
+            // Get seller feedback using /api/sellers/{sellerId}/feedback
+            const res = await sellersAPI.getSellerFeedback(sellerId)
+            
+            // Seller feedback structure: { flags: [], endorsements: [] }
+            const flags = res?.data?.flags || []
+            const endorsements = res?.data?.endorsements || []
+            
+            // Combine flags and endorsements with type markers
+            const combined = [
+              ...flags.map((flag: any) => ({ ...flag, _type: 'flag' })),
+              ...endorsements.map((endorsement: any) => ({ ...endorsement, _type: 'endorsement' }))
+            ]
+            
+            setFeedbacks(combined)
+          } catch (sellerErr: any) {
+            // If we can't get seller profile, show specific error
+            const sellerMsg = sellerErr?.response?.data?.message || sellerErr?.message || "Failed to load seller profile. Please make sure you have claimed your seller profile."
+            setFeedbackError(sellerMsg)
+            setFeedbacks([])
+          }
+        } else {
+          // For buyers/users, use the existing endpoint
+          const res = await usersAPI.getMyFeedback()
+          // Expecting res.data.feedbackHistory or res.data depending on backend shape
+          const list = res?.data?.feedbackHistory || res?.data || []
+          setFeedbacks(Array.isArray(list) ? list : [])
+        }
       } catch (err: any) {
         const msg = err?.response?.data?.message || "Failed to load feedback."
         setFeedbackError(msg)
@@ -87,7 +130,7 @@ export function UserDropdown() {
     if (showSettings && activeSettingsTab === "my-feedbacks" && feedbacks === null && !loadingFeedbacks) {
       loadFeedbacks()
     }
-  }, [showSettings, activeSettingsTab])
+  }, [showSettings, activeSettingsTab, user])
 
   // Load profile helper and when My Profile tab is active
   const loadProfile = async () => {
@@ -95,8 +138,8 @@ export function UserDropdown() {
     setProfileError(null)
     try {
       const res = await authAPI.getMe()
-      const u = res?.data?.user || res?.user || null
-      setProfileData(u)
+      const response = res?.data?.user || res?.user || null
+      setProfileData(response)
     } catch (err: any) {
       setProfileError(err?.response?.data?.message || 'Failed to load profile.')
       setProfileData(null)
@@ -111,7 +154,22 @@ export function UserDropdown() {
     }
   }, [showSettings, activeSettingsTab])
 
-  // Load interactions when the tab becomes active
+  // Load seller profile data when update-profile tab is opened for sellers
+  useEffect(() => {
+    if (showSettings && activeSettingsTab === 'update-profile' && user?.role === 'seller') {
+      // Pre-fill form if we have profile data from analytics or profile view
+      // This is optional - form can start empty and user can fill it
+      if (profileData && !sellerProfileName && !sellerLocation && !sellerBio) {
+        // If we have seller profile data, pre-fill it
+        // Note: You may need to adjust this based on actual data structure
+        setSellerProfileName(profileData.name || "")
+        setSellerLocation(profileData.location || "")
+        setSellerBio(profileData.bio || "")
+      }
+    }
+  }, [showSettings, activeSettingsTab, user, profileData])
+
+  // Load interactions when the tab becomes active (for buyers)
   useEffect(() => {
     const loadInteractions = async () => {
       setLoadingInteractions(true)
@@ -130,10 +188,33 @@ export function UserDropdown() {
       }
     }
 
-    if (showSettings && activeSettingsTab === "my-interactions" && interactions === null && !loadingInteractions) {
+    if (showSettings && activeSettingsTab === "my-interactions" && interactions === null && !loadingInteractions && user?.role !== "seller") {
       loadInteractions()
     }
-  }, [showSettings, activeSettingsTab])
+  }, [showSettings, activeSettingsTab, user])
+
+  // Load analytics when the tab becomes active (for sellers)
+  useEffect(() => {
+    const loadAnalytics = async () => {
+      setLoadingAnalytics(true)
+      setAnalyticsError(null)
+      try {
+        const sellerId = "68fb8d9ad8299bdd94be605d" // Hardcoded as per user request
+        const res = await sellersAPI.getSellerAnalytics(sellerId)
+        setAnalytics(res?.data || res)
+      } catch (err: any) {
+        const msg = err?.response?.data?.message || "Failed to load analytics."
+        setAnalyticsError(msg)
+        setAnalytics(null)
+      } finally {
+        setLoadingAnalytics(false)
+      }
+    }
+
+    if (showSettings && activeSettingsTab === "my-analytics" && analytics === null && !loadingAnalytics && user?.role === "seller") {
+      loadAnalytics()
+    }
+  }, [showSettings, activeSettingsTab, user])
 
   const handleBecomeSeller = () => {
     setIsOpen(false)
@@ -241,6 +322,7 @@ export function UserDropdown() {
             
             <button
               onClick={handleSettings}
+              data-settings-trigger
               className="w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-50 flex items-center space-x-3"
             >
               <Settings className="w-4 h-4 text-gray-400" />
@@ -372,14 +454,25 @@ export function UserDropdown() {
                 >
                   Change Password
                 </button>
-                <button
-                  className={`w-full text-left px-3 py-3 rounded-md text-sm ${
-                    activeSettingsTab === "my-interactions" ? "bg-gray-100 text-gray-900 font-medium" : "text-gray-700 hover:bg-gray-50"
-                  }`}
-                  onClick={() => setActiveSettingsTab("my-interactions")}
-                >
-                  My Interactions
-                </button>
+                {user?.role === "seller" ? (
+                  <button
+                    className={`w-full text-left px-3 py-3 rounded-md text-sm ${
+                      activeSettingsTab === "my-analytics" ? "bg-gray-100 text-gray-900 font-medium" : "text-gray-700 hover:bg-gray-50"
+                    }`}
+                    onClick={() => setActiveSettingsTab("my-analytics")}
+                  >
+                    My Analytics
+                  </button>
+                ) : (
+                  <button
+                    className={`w-full text-left px-3 py-3 rounded-md text-sm ${
+                      activeSettingsTab === "my-interactions" ? "bg-gray-100 text-gray-900 font-medium" : "text-gray-700 hover:bg-gray-50"
+                    }`}
+                    onClick={() => setActiveSettingsTab("my-interactions")}
+                  >
+                    My Interactions
+                  </button>
+                )}
                 <button
                   className={`w-full text-left px-3 py-3 rounded-md text-sm ${
                     activeSettingsTab === "my-feedbacks" ? "bg-gray-100 text-gray-900 font-medium" : "text-gray-700 hover:bg-gray-50"
@@ -463,49 +556,132 @@ export function UserDropdown() {
                 {activeSettingsTab === "update-profile" && (
                   <div>
                     <h4 className="text-base font-semibold text-gray-900 mb-2">Update My Profile</h4>
-                    <p className="text-sm text-gray-600 mb-4">You can update your display name below.</p>
+                    
+                    {user?.role === "seller" ? (
+                      // Seller profile update form
+                      <div className="space-y-4 max-w-2xl">
+                        <p className="text-sm text-gray-600 mb-4">Update your seller profile information below.</p>
+                        
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-2">Name</label>
+                          <Input
+                            type="text"
+                            placeholder="Enter your name"
+                            value={sellerProfileName}
+                            onChange={(e) => setSellerProfileName(e.target.value)}
+                          />
+                        </div>
 
-                    <div className="space-y-4 max-w-md">
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">Display Name</label>
-                        <Input
-                          type="text"
-                          placeholder="Enter your name"
-                          value={profileName}
-                          onChange={(e) => setProfileName(e.target.value)}
-                        />
-                      </div>
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-2">Location</label>
+                          <Input
+                            type="text"
+                            placeholder="e.g., Lagos, Nigeria"
+                            value={sellerLocation}
+                            onChange={(e) => setSellerLocation(e.target.value)}
+                          />
+                        </div>
 
-                      <div className="flex items-center gap-2">
-                        <Button
-                          onClick={async () => {
-                            const trimmed = profileName.trim()
-                            if (!trimmed) {
-                              toast.error("Name cannot be empty")
-                              return
-                            }
-                            setUpdatingProfile(true)
-                            try {
-                              await usersAPI.updateProfile({ name: trimmed })
-                              toast.success("Profile updated")
-                              // reflect in UI immediately
-                              try { updateUser({ name: trimmed }) } catch {}
-                              // refresh profile details
-                              loadProfile()
-                            } catch (err: any) {
-                              toast.error(err?.response?.data?.message || "Failed to update profile")
-                            } finally {
-                              setUpdatingProfile(false)
-                            }
-                          }}
-                          disabled={updatingProfile}
-                        >
-                          {updatingProfile && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
-                          Save Changes
-                        </Button>
-                        <Button variant="outline" onClick={() => setProfileName(user?.name || "")}>Reset</Button>
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-2">Bio</label>
+                          <Textarea
+                            placeholder="Tell buyers about yourself and your business..."
+                            value={sellerBio}
+                            onChange={(e) => setSellerBio(e.target.value)}
+                            rows={4}
+                            className="resize-none"
+                          />
+                        </div>
+
+                        <div className="flex items-center gap-2">
+                          <Button
+                            onClick={async () => {
+                              const trimmedName = sellerProfileName.trim()
+                              if (!trimmedName) {
+                                toast.error("Name cannot be empty")
+                                return
+                              }
+                              setUpdatingProfile(true)
+                              try {
+                                await sellersAPI.updateSellerProfile({
+                                  profileData: {
+                                    name: trimmedName,
+                                    location: sellerLocation.trim() || undefined,
+                                    bio: sellerBio.trim() || undefined
+                                  }
+                                })
+                                toast.success("Profile updated successfully")
+                                // refresh profile details
+                                loadProfile()
+                              } catch (err: any) {
+                                toast.error(err?.response?.data?.message || "Failed to update profile")
+                              } finally {
+                                setUpdatingProfile(false)
+                              }
+                            }}
+                            disabled={updatingProfile}
+                          >
+                            {updatingProfile && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
+                            Save Changes
+                          </Button>
+                          <Button 
+                            variant="outline" 
+                            onClick={() => {
+                              setSellerProfileName("")
+                              setSellerLocation("")
+                              setSellerBio("")
+                            }}
+                          >
+                            Reset
+                          </Button>
+                        </div>
                       </div>
-                    </div>
+                    ) : (
+                      // Buyer/user profile update form
+                      <div className="space-y-4 max-w-md">
+                        <p className="text-sm text-gray-600 mb-4">You can update your display name below.</p>
+
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-2">Display Name</label>
+                          <Input
+                            type="text"
+                            placeholder="Enter your name"
+                            value={profileName}
+                            onChange={(e) => setProfileName(e.target.value)}
+                          />
+                        </div>
+
+                        <div className="flex items-center gap-2">
+                          <Button
+                            onClick={async () => {
+                              const trimmed = profileName.trim()
+                              if (!trimmed) {
+                                toast.error("Name cannot be empty")
+                                return
+                              }
+                              setUpdatingProfile(true)
+                              try {
+                                await usersAPI.updateProfile({ name: trimmed })
+                                toast.success("Profile updated")
+                                // reflect in UI immediately
+                                try { updateUser({ name: trimmed }) } catch {}
+                                // refresh profile details
+                                loadProfile()
+                              } catch (err: any) {
+                                toast.error(err?.response?.data?.message || "Failed to update profile")
+                              } finally {
+                                setUpdatingProfile(false)
+                              }
+                            }}
+                            disabled={updatingProfile}
+                          >
+                            {updatingProfile && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
+                            Save Changes
+                          </Button>
+                          <Button variant="outline" onClick={() => setProfileName(user?.name || "")}>Reset</Button>
+                        </div>
+                      </div>
+                    )}
                   </div>
                 )}
 
@@ -516,7 +692,7 @@ export function UserDropdown() {
                   </div>
                 )}
 
-                {activeSettingsTab === "my-interactions" && (
+                {activeSettingsTab === "my-interactions" && user?.role !== "seller" && (
                   <div>
                     <h4 className="text-base font-semibold text-gray-900 mb-2">My Interactions</h4>
                     {loadingInteractions && (
@@ -673,6 +849,220 @@ export function UserDropdown() {
                   </div>
                 )}
 
+                {activeSettingsTab === "my-analytics" && user?.role === "seller" && (
+                  <div>
+                    <h4 className="text-base font-semibold text-gray-900 mb-4">My Analytics</h4>
+                    {loadingAnalytics && (
+                      <div className="flex items-center text-sm text-gray-600">
+                        <Loader2 className="w-4 h-4 mr-2 animate-spin" /> Loading analytics...
+                      </div>
+                    )}
+                    {analyticsError && (
+                      <p className="text-sm text-red-600">{analyticsError}</p>
+                    )}
+                    {!loadingAnalytics && !analyticsError && analytics && (
+                      <div className="mt-4 space-y-6">
+                        {/* Pulse Score Gauge */}
+                        <div className="bg-gradient-to-br from-blue-50 to-indigo-50 rounded-xl p-6 border border-blue-100">
+                          <div className="flex items-center justify-between mb-4">
+                            <h5 className="text-lg font-semibold text-gray-900">Pulse Score</h5>
+                            <span className={`px-3 py-1 rounded-full text-xs font-medium ${
+                              analytics.seller?.confidenceLevel === 'high' ? 'bg-green-100 text-green-700' :
+                              analytics.seller?.confidenceLevel === 'medium' ? 'bg-yellow-100 text-yellow-700' :
+                              'bg-red-100 text-red-700'
+                            }`}>
+                              {analytics.seller?.confidenceLevel?.toUpperCase() || 'N/A'}
+                            </span>
+                          </div>
+                          <div className="flex items-center justify-center">
+                            <div className="relative w-48 h-48">
+                              {/* Circular Progress */}
+                              <svg className="transform -rotate-90 w-48 h-48">
+                                <circle
+                                  cx="96"
+                                  cy="96"
+                                  r="84"
+                                  stroke="currentColor"
+                                  strokeWidth="12"
+                                  fill="none"
+                                  className="text-gray-200"
+                                />
+                                <circle
+                                  cx="96"
+                                  cy="96"
+                                  r="84"
+                                  stroke="currentColor"
+                                  strokeWidth="12"
+                                  fill="none"
+                                  strokeDasharray={`${2 * Math.PI * 84}`}
+                                  strokeDashoffset={`${2 * Math.PI * 84 * (1 - (analytics.seller?.pulseScore || 0) / 100)}`}
+                                  strokeLinecap="round"
+                                  className={`${
+                                    (analytics.seller?.pulseScore || 0) >= 80 ? 'text-green-500' :
+                                    (analytics.seller?.pulseScore || 0) >= 60 ? 'text-yellow-500' :
+                                    'text-red-500'
+                                  }`}
+                                />
+                              </svg>
+                              <div className="absolute inset-0 flex items-center justify-center">
+                                <div className="text-center">
+                                  <div className="text-5xl font-bold text-gray-900">
+                                    {analytics.seller?.pulseScore || 0}
+                                  </div>
+                                  <div className="text-sm text-gray-600 mt-1">out of 100</div>
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* Key Metrics Grid */}
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                          {/* Trust Level Card */}
+                          <div className="bg-white rounded-xl p-5 border border-gray-200 shadow-sm">
+                            <div className="flex items-center justify-between mb-3">
+                              <h6 className="text-sm font-medium text-gray-600">Trust Level</h6>
+                              <span className={`px-2 py-1 rounded text-xs font-semibold ${
+                                analytics.trustLevel === 'High' ? 'bg-green-100 text-green-700' :
+                                analytics.trustLevel === 'Medium' ? 'bg-yellow-100 text-yellow-700' :
+                                'bg-red-100 text-red-700'
+                              }`}>
+                                {analytics.trustLevel || 'N/A'}
+                              </span>
+                            </div>
+                            <div className="text-3xl font-bold text-gray-900">
+                              {analytics.trustLevel || 'N/A'}
+                            </div>
+                          </div>
+
+                          {/* Verification Status */}
+                          <div className="bg-white rounded-xl p-5 border border-gray-200 shadow-sm">
+                            <div className="flex items-center justify-between mb-3">
+                              <h6 className="text-sm font-medium text-gray-600">Verification Status</h6>
+                              <span className={`px-2 py-1 rounded text-xs font-semibold ${
+                                analytics.seller?.verificationStatus === 'verified' ? 'bg-green-100 text-green-700' :
+                                analytics.seller?.verificationStatus === 'id-verified' ? 'bg-blue-100 text-blue-700' :
+                                'bg-gray-100 text-gray-700'
+                              }`}>
+                                {analytics.seller?.verificationStatus === 'verified' ? 'Verified' :
+                                 analytics.seller?.verificationStatus === 'id-verified' ? 'ID Verified' :
+                                 'Unverified'}
+                              </span>
+                            </div>
+                            <div className="text-sm text-gray-700">
+                              {analytics.seller?.lastScored && (
+                                <p>Last Scored: {new Date(analytics.seller.lastScored).toLocaleDateString()}</p>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* Feedback Metrics */}
+                        <div className="bg-white rounded-xl p-6 border border-gray-200 shadow-sm">
+                          <h5 className="text-lg font-semibold text-gray-900 mb-4">Feedback Summary</h5>
+                          <div className="grid grid-cols-3 gap-4">
+                            <div className="text-center p-4 bg-red-50 rounded-lg border border-red-100">
+                              <div className="text-3xl font-bold text-red-600">
+                                {analytics.feedback?.totalFlags || 0}
+                              </div>
+                              <div className="text-sm text-gray-600 mt-1">Total Flags</div>
+                            </div>
+                            <div className="text-center p-4 bg-green-50 rounded-lg border border-green-100">
+                              <div className="text-3xl font-bold text-green-600">
+                                {analytics.feedback?.totalEndorsements || 0}
+                              </div>
+                              <div className="text-sm text-gray-600 mt-1">Endorsements</div>
+                            </div>
+                            <div className="text-center p-4 bg-blue-50 rounded-lg border border-blue-100">
+                              <div className={`text-3xl font-bold ${
+                                (analytics.feedback?.netFeedbackScore || 0) >= 0 ? 'text-blue-600' : 'text-red-600'
+                              }`}>
+                                {analytics.feedback?.netFeedbackScore >= 0 ? '+' : ''}{analytics.feedback?.netFeedbackScore || 0}
+                              </div>
+                              <div className="text-sm text-gray-600 mt-1">Net Score</div>
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* Listings Metrics */}
+                        <div className="bg-white rounded-xl p-6 border border-gray-200 shadow-sm">
+                          <h5 className="text-lg font-semibold text-gray-900 mb-4">Listings Overview</h5>
+                          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+                            <div className="text-center p-4 bg-gray-50 rounded-lg">
+                              <div className="text-2xl font-bold text-gray-900">
+                                {analytics.listings?.total || 0}
+                              </div>
+                              <div className="text-xs text-gray-600 mt-1">Total Listings</div>
+                            </div>
+                            <div className="text-center p-4 bg-green-50 rounded-lg">
+                              <div className="text-2xl font-bold text-green-600">
+                                {analytics.listings?.active || 0}
+                              </div>
+                              <div className="text-xs text-gray-600 mt-1">Active</div>
+                            </div>
+                            <div className="text-center p-4 bg-gray-50 rounded-lg">
+                              <div className="text-2xl font-bold text-gray-600">
+                                {analytics.listings?.inactive || 0}
+                              </div>
+                              <div className="text-xs text-gray-600 mt-1">Inactive</div>
+                            </div>
+                            <div className="text-center p-4 bg-blue-50 rounded-lg">
+                              <div className="text-2xl font-bold text-blue-600">
+                                ${(analytics.listings?.averagePrice || 0).toLocaleString()}
+                              </div>
+                              <div className="text-xs text-gray-600 mt-1">Avg Price</div>
+                            </div>
+                          </div>
+                          
+                          {/* Listings Bar Chart */}
+                          {(analytics.listings?.total || 0) > 0 && (
+                            <div className="mt-4">
+                              <div className="flex items-end gap-4 h-32">
+                                {/* Total Bar */}
+                                <div className="flex-1 flex flex-col items-center">
+                                  <div 
+                                    className="w-full bg-gray-300 rounded-t transition-all duration-500"
+                                    style={{ height: '100%' }}
+                                  />
+                                  <div className="mt-2 text-xs text-gray-600">Total</div>
+                                  <div className="text-sm font-semibold text-gray-900">{analytics.listings?.total || 0}</div>
+                                </div>
+                                
+                                {/* Active Bar */}
+                                <div className="flex-1 flex flex-col items-center">
+                                  <div 
+                                    className="w-full bg-green-500 rounded-t transition-all duration-500"
+                                    style={{ 
+                                      height: `${((analytics.listings?.active || 0) / (analytics.listings?.total || 1)) * 100}%` 
+                                    }}
+                                  />
+                                  <div className="mt-2 text-xs text-gray-600">Active</div>
+                                  <div className="text-sm font-semibold text-green-600">{analytics.listings?.active || 0}</div>
+                                </div>
+                                
+                                {/* Inactive Bar */}
+                                <div className="flex-1 flex flex-col items-center">
+                                  <div 
+                                    className="w-full bg-gray-400 rounded-t transition-all duration-500"
+                                    style={{ 
+                                      height: `${((analytics.listings?.inactive || 0) / (analytics.listings?.total || 1)) * 100}%` 
+                                    }}
+                                  />
+                                  <div className="mt-2 text-xs text-gray-600">Inactive</div>
+                                  <div className="text-sm font-semibold text-gray-600">{analytics.listings?.inactive || 0}</div>
+                                </div>
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    )}
+                    {!loadingAnalytics && !analyticsError && !analytics && (
+                      <p className="text-sm text-gray-600 mt-4">No analytics data available.</p>
+                    )}
+                  </div>
+                )}
+
                 {activeSettingsTab === "my-feedbacks" && (
                   <div>
                     <h4 className="text-base font-semibold text-gray-900 mb-2">My Feedbacks</h4>
@@ -688,36 +1078,102 @@ export function UserDropdown() {
                       <div className="mt-4 space-y-3">
                         {feedbacks && feedbacks.length > 0 ? (
                           feedbacks.map((item: any, idx: number) => {
-                            const seller = item?.seller || {}
-                            const flag = item?.flag
-                            const isFlag = !!flag
-                            return (
-                              <div key={idx} className="border border-gray-200 rounded-xl p-4 bg-white">
-                                <div className="flex items-start justify-between">
-                                  <div>
-                                    <div className="flex items-center gap-2 mb-1">
-                                      <p className="text-sm font-semibold text-gray-900">
-                                        {seller?.name || 'Seller'}
-                                      </p>
-                                      <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs bg-gray-100 text-gray-700 border border-gray-200">
-                                        {seller?.platform || 'unknown'}
-                                      </span>
-                                      {typeof seller?.pulseScore === 'number' && (
-                                        <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs bg-blue-50 text-blue-700 border border-blue-200">
-                                          Pulse: {seller.pulseScore}
+                            // Check if this is seller feedback format (has _type or userId) vs buyer format (has seller)
+                            const isSellerFormat = item?._type || item?.userId
+                            
+                            if (isSellerFormat) {
+                              // Seller feedback format
+                              const isFlag = item._type === 'flag'
+                              const isEndorsement = item._type === 'endorsement'
+                              const feedbackUser = item?.userId || {}
+                              const reason = item?.reason || 'No details provided.'
+                              const timestamp = item?.timestamp
+                              const isVerified = item?.isVerified
+                              const adminReview = item?.adminReview
+                              const flagId = item?._id
+
+                              return (
+                                <div key={idx} className={`border rounded-xl p-4 ${isFlag ? 'border-red-200 bg-red-50/40' : isEndorsement ? 'border-green-200 bg-green-50/40' : 'border-gray-200 bg-gray-50'}`}>
+                                  <div className="flex items-start justify-between">
+                                    <div className="flex-1">
+                                      <div className="flex items-center gap-2 mb-2">
+                                        <span className={`inline-block px-2 py-0.5 rounded-full text-xs mr-2 ${isFlag ? 'bg-red-50 text-red-700 border border-red-200' : isEndorsement ? 'bg-green-50 text-green-700 border border-green-200' : 'bg-gray-50 text-gray-700 border border-gray-200'}`}>
+                                          {isFlag ? 'Flag' : isEndorsement ? 'Endorsement' : 'Feedback'}
                                         </span>
-                                      )}
-                                    </div>
-                                    {isFlag && (
-                                      <div className="text-sm text-gray-700">
-                                        <span className="inline-block px-2 py-0.5 rounded-full text-xs mr-2 bg-red-50 text-red-700 border border-red-200">Flag</span>
-                                        <span>{flag?.reason || 'No details provided.'}</span>
-                                        {flag?.timestamp && (
-                                          <span className="ml-2 text-xs text-gray-500">{new Date(flag.timestamp).toLocaleString()}</span>
+                                        {isVerified && (
+                                          <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs bg-blue-50 text-blue-700 border border-blue-200">
+                                            Verified
+                                          </span>
+                                        )}
+                                        {!isVerified && (
+                                          <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs bg-gray-50 text-gray-700 border border-gray-200">
+                                            Pending Review
+                                          </span>
                                         )}
                                       </div>
-                                    )}
+                                      
+                                      <div className="text-sm text-gray-700 mb-2">
+                                        <p className="font-medium mb-1">From: {feedbackUser?.name || 'Anonymous'}</p>
+                                        {feedbackUser?.email && (
+                                          <p className="text-xs text-gray-500">{feedbackUser.email}</p>
+                                        )}
+                                      </div>
+
+                                      <div className="text-sm text-gray-700">
+                                        <p className="mb-1"><strong>Reason:</strong> {reason}</p>
+                                        {timestamp && (
+                                          <p className="text-xs text-gray-500">Submitted: {new Date(timestamp).toLocaleString()}</p>
+                                        )}
+                                      </div>
+
+                                      {adminReview && (
+                                        <div className="mt-2 p-2 bg-gray-50 rounded border border-gray-200">
+                                          <p className="text-xs font-semibold text-gray-700 mb-1">Admin Review:</p>
+                                          <p className="text-xs text-gray-600">Action: {adminReview.action}</p>
+                                          {adminReview.adminNotes && (
+                                            <p className="text-xs text-gray-600 mt-1">Notes: {adminReview.adminNotes}</p>
+                                          )}
+                                          {adminReview.reviewedAt && (
+                                            <p className="text-xs text-gray-500 mt-1">Reviewed: {new Date(adminReview.reviewedAt).toLocaleString()}</p>
+                                          )}
+                                        </div>
+                                      )}
+                                    </div>
                                   </div>
+                                </div>
+                              )
+                            } else {
+                              // Buyer feedback format (original structure)
+                              const seller = item?.seller || {}
+                              const flag = item?.flag
+                              const isFlag = !!flag
+                              return (
+                                <div key={idx} className="border border-gray-200 rounded-xl p-4 bg-white">
+                                  <div className="flex items-start justify-between">
+                                    <div>
+                                      <div className="flex items-center gap-2 mb-1">
+                                        <p className="text-sm font-semibold text-gray-900">
+                                          {seller?.name || 'Seller'}
+                                        </p>
+                                        <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs bg-gray-100 text-gray-700 border border-gray-200">
+                                          {seller?.platform || 'unknown'}
+                                        </span>
+                                        {typeof seller?.pulseScore === 'number' && (
+                                          <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs bg-blue-50 text-blue-700 border border-blue-200">
+                                            Pulse: {seller.pulseScore}
+                                          </span>
+                                        )}
+                                      </div>
+                                      {isFlag && (
+                                        <div className="text-sm text-gray-700">
+                                          <span className="inline-block px-2 py-0.5 rounded-full text-xs mr-2 bg-red-50 text-red-700 border border-red-200">Flag</span>
+                                          <span>{flag?.reason || 'No details provided.'}</span>
+                                          {flag?.timestamp && (
+                                            <span className="ml-2 text-xs text-gray-500">{new Date(flag.timestamp).toLocaleString()}</span>
+                                          )}
+                                        </div>
+                                      )}
+                                    </div>
                                     {isFlag && (
                                       <div className="ml-4">
                                         <Button
@@ -778,9 +1234,10 @@ export function UserDropdown() {
                                         </Button>
                                       </div>
                                     )}
+                                  </div>
                                 </div>
-                              </div>
-                            )
+                              )
+                            }
                           })
                         ) : (
                           <p className="text-sm text-gray-600">No feedback found.</p>

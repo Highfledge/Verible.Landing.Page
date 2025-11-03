@@ -12,6 +12,7 @@ import { SellerProfileDisplay } from "@/components/seller-profile-display"
 import { useAuth } from "@/lib/stores/auth-store"
 import { sellersAPI } from "@/lib/api/client"
 import { toast } from "sonner"
+import { cleanObjectData } from "@/lib/utils/clean-data"
 
 const platforms = [
   { value: "all", label: "All Platforms", status: "" },
@@ -88,27 +89,30 @@ export function BuyerToolsPage() {
       }
 
       const apiData = response?.data
+      // Clean the data first to remove escaped backslashes
+      const cleanedData = cleanObjectData(apiData)
+      
       // Normalize score-by-url shape to match SellerProfileDisplay expectations
-      const normalized = apiData?.seller
-        ? apiData
+      const normalized = cleanedData?.seller
+        ? cleanedData
         : {
             seller: {
-              profileData: apiData?.profileData || {},
-              pulseScore: apiData?.scoringResult?.pulseScore ?? 0,
-              confidenceLevel: apiData?.scoringResult?.confidenceLevel || 'low',
-              verificationStatus: apiData?.marketplaceData?.verificationStatus || 'unverified',
-              lastSeen: apiData?.marketplaceData?.lastSeen || '',
-              verification: apiData?.marketplaceData?.verificationStatus,
+              profileData: cleanedData?.profileData || {},
+              pulseScore: cleanedData?.scoringResult?.pulseScore ?? 0,
+              confidenceLevel: cleanedData?.scoringResult?.confidenceLevel || 'low',
+              verificationStatus: cleanedData?.marketplaceData?.verificationStatus || 'unverified',
+              lastSeen: cleanedData?.marketplaceData?.lastSeen || '',
+              verification: cleanedData?.marketplaceData?.verificationStatus,
             },
             extractedData: {
-              platform: apiData?.marketplaceData?.platform || 'unknown',
+              platform: cleanedData?.marketplaceData?.platform || 'unknown',
               profileUrl: '',
-              profileData: apiData?.profileData || {},
-              marketplaceData: apiData?.marketplaceData || {},
-              recentListings: apiData?.recentListings || [],
-              trustIndicators: apiData?.scoringResult?.trustIndicators || {},
+              profileData: cleanedData?.profileData || {},
+              marketplaceData: cleanedData?.marketplaceData || {},
+              recentListings: cleanedData?.recentListings || [],
+              trustIndicators: cleanedData?.scoringResult?.trustIndicators || {},
             },
-            scoringResult: apiData?.scoringResult || {},
+            scoringResult: cleanedData?.scoringResult || {},
           }
 
       console.log("Seller data response (normalized):", normalized)

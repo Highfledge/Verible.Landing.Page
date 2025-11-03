@@ -16,6 +16,7 @@ import {
   Filter
 } from "lucide-react"
 import { toast } from "sonner"
+import { cleanObjectData } from "@/lib/utils/clean-data"
 
 interface Seller {
   _id: string
@@ -104,7 +105,9 @@ export function SellersSection() {
 
       // Handle the API response structure
       if (response.success && response.data && response.data.sellers) {
-        setSellers(response.data.sellers)
+        // Clean the seller data to remove escaped backslashes
+        const cleanedSellers = cleanObjectData(response.data.sellers)
+        setSellers(cleanedSellers)
       } else {
         console.error("Invalid API response structure:", response)
         toast.error("Invalid response from server")
