@@ -138,15 +138,13 @@ export const authAPI = {
 export const sellersAPI = {
   // Extract seller profile (for logged in users)
   extractProfile: async (data: { profileUrl: string }) => {
-    console.log("----->>>>>>", data)
     const response = await apiClient.post('/api/sellers/extract-profile', data)
     return response.data
   },
 
-  // Get seller score by URL (for non-logged in users)
+  // Get seller score by URL (for non-logged in users) - uses extract-profile endpoint
   scoreByUrl: async (data: { profileUrl: string }) => {
-    console.log("----->>>>>>", data)
-    const response = await apiClient.post('/api/sellers/score-by-url', data)
+    const response = await apiClient.post('/api/sellers/extract-profile', data)
     return response.data
   },
 
@@ -167,6 +165,36 @@ export const sellersAPI = {
     offset?: number
   }) => {
     const response = await apiClient.get('/api/sellers/all', { params })
+    return response.data
+  },
+
+  // Search sellers by name and platform
+  searchByNameAndPlatform: async (data: {
+    name: string
+    platform: string
+  }) => {
+    const response = await apiClient.get('/api/sellers/lookup', {
+      params: {
+        name: data.name,
+        platform: data.platform,
+      }
+    })
+    return response.data
+  },
+
+  // Search sellers by name, platform and location
+  searchByNamePlatformLocation: async (data: {
+    name: string
+    platform: string
+    location: string
+  }) => {
+    const response = await apiClient.get('/api/sellers/search', {
+      params: {
+        name: data.name,
+        platform: data.platform,
+        location: data.location,
+      }
+    })
     return response.data
   },
 
@@ -225,6 +253,12 @@ export const sellersAPI = {
   // Get current user's seller profile (to get seller ID)
   getMySellerProfile: async () => {
     const response = await apiClient.get('/api/sellers/my-profile')
+    return response.data
+  },
+
+  // Get seller by ID
+  getSellerById: async (sellerId: string) => {
+    const response = await apiClient.get(`/api/sellers/${sellerId}`)
     return response.data
   }
 }

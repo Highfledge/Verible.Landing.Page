@@ -1,6 +1,7 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect, Suspense } from "react"
+import { useSearchParams } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
@@ -9,21 +10,61 @@ import Link from "next/link"
 import { sellersAPI } from "@/lib/api/client"
 import { toast } from "sonner"
 import { SellerDetailsTabs } from "@/components/seller-details-tabs"
+import { SellerResultModal } from "@/components/seller-result-modal"
 import { Header } from "@/components/header"
 import { StickyBottomBar } from "@/components/sticky-bottom-bar"
 import { cleanObjectData, cleanText } from "@/lib/utils/clean-data"
 
-export default function SellerLookupPage() {
+function SellerLookupContent() {
+  const searchParams = useSearchParams()
   const [searchQuery, setSearchQuery] = useState("")
   const [isSearching, setIsSearching] = useState(false)
   const [searchResults, setSearchResults] = useState<any[]>([])
   const [selectedSeller, setSelectedSeller] = useState<any | null>(null)
+  const [searchMode, setSearchMode] = useState<"profile-url" | "name-platform" | "name-platform-location" | null>(null)
+  const [showModal, setShowModal] = useState(false)
 
-  const handleSearch = async () => {
-    if (!searchQuery.trim()) {
-      toast.error("Please enter a seller username, store name, or profile URL")
-      return
+  // Read query parameters from URL
+  useEffect(() => {
+    const q = searchParams.get("q")
+    const platform = searchParams.get("platform")
+    const location = searchParams.get("location")
+
+    if (q) {
+      const decodedQuery = decodeURIComponent(q)
+      setSearchQuery(decodedQuery)
+
+      // Determine search mode based on parameters
+      if (location) {
+        setSearchMode("name-platform-location")
+        // Name is passed directly in the query parameter
+        const name = decodedQuery
+        // Auto-search
+        setTimeout(() => {
+          handleSearchByNamePlatformLocation(name, decodeURIComponent(platform || ""), decodeURIComponent(location))
+        }, 100)
+      } else if (platform) {
+        setSearchMode("name-platform")
+        // Name is passed directly in the query parameter
+        const name = decodedQuery
+        // Auto-search
+        setTimeout(() => {
+          handleSearchByNameAndPlatform(name, decodeURIComponent(platform))
+        }, 100)
+      } else {
+        setSearchMode("profile-url")
+        // Auto-search if query is provided
+        setTimeout(() => {
+          handleSearchByUrl(decodedQuery)
+        }, 100)
+      }
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [searchParams])
+
+  // Search by Profile URL
+  const handleSearchByUrl = async (url: string) => {
+    if (!url.trim()) return
 
     setIsSearching(true)
     setSearchResults([])
@@ -31,37 +72,14 @@ export default function SellerLookupPage() {
 
     try {
       const response = await sellersAPI.scoreByUrl({
-        profileUrl: searchQuery.trim()
+        profileUrl: url.trim()
       })
 
       if (response.success && response.data) {
-        // Clean the response data first
-        const cleanedData = cleanObjectData(response.data)
-        
-        // Transform the API response to match the expected structure
-        const result = {
-          seller: {
-            profileData: cleanedData.profileData,
-            pulseScore: cleanedData.scoringResult?.pulseScore || 0,
-            confidenceLevel: cleanedData.scoringResult?.confidenceLevel || "low",
-            verificationStatus: cleanedData.marketplaceData?.verificationStatus || "unverified",
-            lastScored: new Date().toISOString(),
-            profileUrl: searchQuery.trim()
-          },
-          extractedData: {
-            profileData: cleanedData.profileData,
-            marketplaceData: cleanedData.marketplaceData,
-            recentListings: cleanedData.recentListings || [],
-            platform: "jiji",
-            profileUrl: searchQuery.trim()
-          },
-          scoringResult: cleanedData.scoringResult,
-          profileUrl: searchQuery.trim()
-        }
-        
-        setSearchResults([result])
-        // Auto-select the first result
-        setSelectedSeller(result)
+        // Store the full response data for the modal
+        setSearchResults([response.data])
+        setSelectedSeller(response.data)
+        setShowModal(true)
         toast.success("Seller found successfully!")
       } else {
         toast.error(response.message || "No seller found with that profile URL")
@@ -74,6 +92,119 @@ export default function SellerLookupPage() {
     } finally {
       setIsSearching(false)
     }
+  }
+
+  // Search by Name and Platform
+  const handleSearchByNameAndPlatform = async (name: string, platform: string) => {
+    if (!name.trim() || !platform) return
+
+    setIsSearching(true)
+    setSearchResults([])
+    setSelectedSeller(null)
+
+    try {
+      const response = await sellersAPI.searchByNameAndPlatform({
+        name: name.trim(),
+        platform: platform,
+      })
+
+      if (response.success && response.data) {
+        const results = Array.isArray(response.data) ? response.data : [response.data]
+        const transformedResults = results.map((item: any) => {
+          const cleanedData = cleanObjectData(item)
+          return transformSellerData(cleanedData, item.profileUrl || "")
+        })
+        setSearchResults(transformedResults)
+        if (transformedResults.length > 0) {
+          setSelectedSeller(transformedResults[0])
+        }
+        toast.success(`Found ${transformedResults.length} seller(s)`)
+      } else {
+        toast.error(response.message || "No sellers found")
+        setSearchResults([])
+      }
+    } catch (error: any) {
+      console.error("Search error:", error)
+      toast.error(error.response?.data?.message || "Failed to search sellers. Please try again.")
+      setSearchResults([])
+    } finally {
+      setIsSearching(false)
+    }
+  }
+
+  // Search by Name, Platform and Location
+  const handleSearchByNamePlatformLocation = async (name: string, platform: string, location: string) => {
+    if (!name.trim() || !platform || !location.trim()) return
+
+    setIsSearching(true)
+    setSearchResults([])
+    setSelectedSeller(null)
+
+    try {
+      const response = await sellersAPI.searchByNamePlatformLocation({
+        name: name.trim(),
+        platform: platform,
+        location: location.trim(),
+      })
+
+      if (response.success && response.data) {
+        const results = Array.isArray(response.data) ? response.data : [response.data]
+        const transformedResults = results.map((item: any) => {
+          const cleanedData = cleanObjectData(item)
+          return transformSellerData(cleanedData, item.profileUrl || "")
+        })
+        setSearchResults(transformedResults)
+        if (transformedResults.length > 0) {
+          setSelectedSeller(transformedResults[0])
+        }
+        toast.success(`Found ${transformedResults.length} seller(s)`)
+      } else {
+        toast.error(response.message || "No sellers found")
+        setSearchResults([])
+      }
+    } catch (error: any) {
+      console.error("Search error:", error)
+      toast.error(error.response?.data?.message || "Failed to search sellers. Please try again.")
+      setSearchResults([])
+    } finally {
+      setIsSearching(false)
+    }
+  }
+
+  // Transform seller data to consistent format
+  const transformSellerData = (cleanedData: any, profileUrl: string) => {
+    return {
+      seller: {
+        profileData: cleanedData.profileData,
+        pulseScore: cleanedData.scoringResult?.pulseScore || cleanedData.pulseScore || 0,
+        confidenceLevel: cleanedData.scoringResult?.confidenceLevel || cleanedData.confidenceLevel || "low",
+        verificationStatus: cleanedData.marketplaceData?.verificationStatus || cleanedData.verificationStatus || "unverified",
+        lastScored: cleanedData.lastScored || new Date().toISOString(),
+        profileUrl: profileUrl
+      },
+      extractedData: {
+        profileData: cleanedData.profileData,
+        marketplaceData: cleanedData.marketplaceData,
+        recentListings: cleanedData.recentListings || [],
+        platform: cleanedData.platform || cleanedData.marketplaceData?.platform || "unknown",
+        profileUrl: profileUrl
+      },
+      scoringResult: cleanedData.scoringResult,
+      profileUrl: profileUrl
+    }
+  }
+
+  // Legacy function for backward compatibility
+  const handleSearchWithQuery = async (query: string) => {
+    await handleSearchByUrl(query)
+  }
+
+  const handleSearch = async () => {
+    if (!searchQuery.trim()) {
+      toast.error("Please enter a seller username, store name, or profile URL")
+      return
+    }
+    await handleSearchWithQuery(searchQuery.trim())
   }
 
   const handleSelectSeller = (result: any) => {
@@ -234,7 +365,23 @@ export default function SellerLookupPage() {
         </div>
       </div>
       <StickyBottomBar />
+      
+      {/* Seller Result Modal */}
+      {selectedSeller && (
+        <SellerResultModal
+          data={selectedSeller}
+          isOpen={showModal}
+          onClose={() => setShowModal(false)}
+        />
+      )}
     </div>
   )
 }
 
+export default function SellerLookupPage() {
+  return (
+    <Suspense fallback={<div className="min-h-screen flex items-center justify-center">Loading...</div>}>
+      <SellerLookupContent />
+    </Suspense>
+  )
+}

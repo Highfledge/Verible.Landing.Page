@@ -17,6 +17,7 @@ import {
 } from "lucide-react"
 import { toast } from "sonner"
 import { cleanObjectData } from "@/lib/utils/clean-data"
+import { SellerResultModal } from "@/components/seller-result-modal"
 
 interface Seller {
   _id: string
@@ -60,6 +61,9 @@ export function SellersSection() {
   const [isLoading, setIsLoading] = useState(false)
   const [dropdownOpen, setDropdownOpen] = useState(false)
   const dropdownRef = useRef<HTMLDivElement>(null)
+  const [selectedSellerData, setSelectedSellerData] = useState<any | null>(null)
+  const [showSellerModal, setShowSellerModal] = useState(false)
+  const [isLoadingSeller, setIsLoadingSeller] = useState(false)
 
   const filterOptions = [
     { value: "top", label: "Top Sellers", icon: TrendingUp },
@@ -131,10 +135,23 @@ export function SellersSection() {
     setDropdownOpen(false)
   }
 
-  const handleViewProfile = (seller: Seller) => {
-    // TODO: Navigate to seller profile page
-    console.log("View profile for:", seller.profileData.name)
-    toast.info(`Viewing profile for ${seller.profileData.name}`)
+  const handleViewProfile = async (seller: Seller) => {
+    setIsLoadingSeller(true)
+    try {
+      const response = await sellersAPI.getSellerById(seller._id)
+      
+      if (response.success && response.data?.seller) {
+        setSelectedSellerData(response.data)
+        setShowSellerModal(true)
+      } else {
+        toast.error(response.message || "Failed to load seller details")
+      }
+    } catch (error: any) {
+      console.error("Error loading seller details:", error)
+      toast.error(error.response?.data?.message || "Failed to load seller details. Please try again.")
+    } finally {
+      setIsLoadingSeller(false)
+    }
   }
 
   // Only show to logged-in buyers
@@ -259,6 +276,18 @@ export function SellersSection() {
           </div>
         )}
       </div>
+
+      {/* Seller Details Modal */}
+      {selectedSellerData && (
+        <SellerResultModal
+          data={selectedSellerData}
+          isOpen={showSellerModal}
+          onClose={() => {
+            setShowSellerModal(false)
+            setSelectedSellerData(null)
+          }}
+        />
+      )}
     </section>
   )
 }

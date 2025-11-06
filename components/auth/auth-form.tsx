@@ -60,7 +60,13 @@ export function AuthForm({ mode }: AuthFormProps) {
         })
         // Store token and user data in Zustand store
         if (response.data.token && response.data.user) {
-          login(response.data.token, response.data.user)
+          // Transform API response to match User interface
+          const userData = {
+            ...response.data.user,
+            id: response.data.user._id || response.data.user.id,
+            isVerified: response.data.user.verified || response.data.user.isVerified || false,
+          }
+          login(response.data.token, userData)
           toast.success("Login successful!")
           router.push("/")
         } else {
@@ -81,7 +87,13 @@ export function AuthForm({ mode }: AuthFormProps) {
 
         // Store token and user data if provided
         if (response.data.token && response.data.user) {
-          login(response.data.token, response.data.user)
+          // Transform API response to match User interface
+          const userData = {
+            ...response.data.user,
+            id: response.data.user._id || response.data.user.id,
+            isVerified: response.data.user.verified || response.data.user.isVerified || false,
+          }
+          login(response.data.token, userData)
         }
         toast.success("Account created successfully! Please verify your email.")
         

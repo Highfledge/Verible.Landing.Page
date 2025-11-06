@@ -1,14 +1,549 @@
 "use client"
 
+import { useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
-import { ArrowRight, Download, Play, Search } from "lucide-react"
+import { Input } from "@/components/ui/input"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { ArrowRight, Download, Play, Search, X, Globe, DollarSign, Shield, ChevronDown, Laptop, Star, Bell, Lock, Link2, User, MapPin, Loader2 } from "lucide-react"
 import { useAuth } from "@/lib/stores/auth-store"
+import { sellersAPI } from "@/lib/api/client"
+import { toast } from "sonner"
+import { SellerResultModal } from "@/components/seller-result-modal"
+
+type SearchMode = "profile-url" | "name-platform" | "name-platform-location" | null
 
 export function HeroSection() {
   const { user, isLoggedIn } = useAuth()
   const isSeller = user?.role === "seller"
+  const isBuyer = isLoggedIn && user?.role === "user"
+  
+  // Buyer search state
+  const [searchMode, setSearchMode] = useState<SearchMode>(null)
+  const [profileUrl, setProfileUrl] = useState("")
+  const [sellerName, setSellerName] = useState("")
+  const [selectedPlatform, setSelectedPlatform] = useState<string>("")
+  const [selectedLocation, setSelectedLocation] = useState("")
+  const [minTrustScore, setMinTrustScore] = useState<number | null>(null)
+  const [showAllFilters, setShowAllFilters] = useState(false)
+  const [isSearching, setIsSearching] = useState(false)
+  const [searchResult, setSearchResult] = useState<any | null>(null)
+  const [showModal, setShowModal] = useState(false)
 
+  const platforms = [
+    { value: "jiji", label: "Jiji" },
+    { value: "facebook", label: "Facebook Marketplace" },
+  ]
+
+  const handleSearch = async () => {
+    if (searchMode === "profile-url") {
+      if (!profileUrl.trim()) {
+        toast.error("Please enter a profile URL")
+        return
+      }
+      
+      setIsSearching(true)
+      try {
+        const response = await sellersAPI.scoreByUrl({
+          profileUrl: profileUrl.trim()
+        })
+
+        if (response.success && response.data) {
+          setSearchResult(response.data)
+          setShowModal(true)
+          toast.success("Seller found successfully!")
+        } else {
+          toast.error(response.message || "No seller found with that profile URL")
+        }
+      } catch (error: any) {
+        console.error("Search error:", error)
+        toast.error(error.response?.data?.message || "Failed to search seller. Please try again.")
+      } finally {
+        setIsSearching(false)
+      }
+    } else if (searchMode === "name-platform") {
+      if (!sellerName.trim() || !selectedPlatform) {
+        toast.error("Please enter seller name and select a platform")
+        return
+      }
+      
+      setIsSearching(true)
+      try {
+        const response = await sellersAPI.searchByNameAndPlatform({
+          name: sellerName.trim(),
+          platform: selectedPlatform
+        })
+
+        if (response.success && response.data?.seller) {
+          setSearchResult(response.data)
+          setShowModal(true)
+          toast.success("Seller found successfully!")
+        } else {
+          toast.error(response.message || "No seller found with that name and platform")
+        }
+      } catch (error: any) {
+        console.error("Search error:", error)
+        toast.error(error.response?.data?.message || "Failed to search seller. Please try again.")
+      } finally {
+        setIsSearching(false)
+      }
+    } else if (searchMode === "name-platform-location") {
+      if (!sellerName.trim() || !selectedPlatform || !selectedLocation.trim()) {
+        toast.error("Please fill in all fields")
+        return
+      }
+      
+      setIsSearching(true)
+      try {
+        const response = await sellersAPI.searchByNamePlatformLocation({
+          name: sellerName.trim(),
+          platform: selectedPlatform,
+          location: selectedLocation.trim()
+        })
+
+        if (response.success && response.data?.sellers && response.data.sellers.length > 0) {
+          // The API returns an array of sellers, we'll show the first one in the modal
+          // Transform the response to match the expected format for the modal
+          const firstSeller = response.data.sellers[0]
+          setSearchResult({
+            seller: firstSeller,
+            pagination: response.data.pagination
+          })
+          setShowModal(true)
+          if (response.data.sellers.length > 1) {
+            toast.success(`Found ${response.data.sellers.length} sellers. Showing first result.`)
+          } else {
+            toast.success("Seller found successfully!")
+          }
+        } else {
+          toast.error(response.message || "No sellers found matching your criteria")
+        }
+      } catch (error: any) {
+        console.error("Search error:", error)
+        toast.error(error.response?.data?.message || "Failed to search sellers. Please try again.")
+      } finally {
+        setIsSearching(false)
+      }
+    }
+  }
+
+  const removeFilter = (type: 'platform' | 'location' | 'trust' | 'name') => {
+    if (type === 'platform') {
+      setSelectedPlatform("")
+      // If platform is required for current mode, clear mode
+      if (searchMode === "name-platform" || searchMode === "name-platform-location") {
+        if (searchMode === "name-platform") {
+          setSearchMode(null)
+          setSellerName("")
+        } else {
+          setSearchMode("name-platform")
+        }
+      }
+    }
+    if (type === 'location') {
+      setSelectedLocation("")
+      // If location is required for current mode, switch to name-platform mode
+      if (searchMode === "name-platform-location") {
+        setSearchMode("name-platform")
+      }
+    }
+    if (type === 'trust') setMinTrustScore(null)
+    if (type === 'name') {
+      setSellerName("")
+      if (searchMode === "name-platform" || searchMode === "name-platform-location") {
+        setSearchMode(null)
+        setSelectedPlatform("")
+        setSelectedLocation("")
+      }
+    }
+  }
+
+  const clearAllFilters = () => {
+    setSearchMode(null)
+    setProfileUrl("")
+    setSellerName("")
+    setSelectedPlatform("")
+    setSelectedLocation("")
+    setMinTrustScore(null)
+  }
+
+  // Buyer-focused dark hero section
+  if (isBuyer) {
+    return (
+      <div className="w-full px-6 py-24 lg:py-32 bg-gradient-to-br from-[#1D2973] via-[#1a2468] to-[#0f1538] text-white">
+        <div className="max-w-7xl mx-auto space-y-12">
+          {/* Headline */}
+          <div className="text-center space-y-6">
+            <h1 className="text-5xl lg:text-6xl font-bold text-purple-200">
+              Verified Sellers in the Marketplace
+            </h1>
+            <p className="text-xl lg:text-2xl text-purple-100 max-w-3xl mx-auto leading-relaxed">
+              Search {265} verified seller profiles available across platforms. Shop with confidence - verify sellers before you buy.
+            </p>
+          </div>
+
+          {/* Social Proof */}
+          <div className="flex items-center justify-center gap-3">
+            <div className="flex -space-x-2">
+              {[1, 2, 3, 4, 5].map((i) => (
+                <div
+                  key={i}
+                  className="w-10 h-10 rounded-full bg-gradient-to-br from-purple-400 to-purple-600 border-2 border-[#1D2973] flex items-center justify-center text-sm font-semibold"
+                >
+                  {String.fromCharCode(64 + i)}
+                </div>
+              ))}
+            </div>
+            <div className="flex items-center gap-1">
+              {[1, 2, 3, 4, 5].map((i) => (
+                <Star key={i} className="w-5 h-5 text-yellow-400 fill-yellow-400" />
+              ))}
+            </div>
+            <span className="text-purple-100 text-sm lg:text-base">Trusted by 10,000+ buyers</span>
+          </div>
+
+          {/* Search Mode Buttons */}
+          <div className="flex items-center justify-center gap-4 flex-wrap">
+            <Button
+              onClick={() => {
+                setSearchMode("profile-url")
+                setSellerName("")
+                setSelectedPlatform("")
+                setSelectedLocation("")
+              }}
+              variant={searchMode === "profile-url" ? "primary" : "secondary"}
+              size="xl"
+              className={`flex items-center gap-2 px-6 py-3 ${
+                searchMode === "profile-url"
+                  ? "bg-purple-600 hover:bg-purple-700 text-white"
+                  : "bg-gray-800 hover:bg-gray-700 text-white border border-gray-700"
+              }`}
+            >
+              <Link2 className="w-5 h-5" />
+              <span>Search by Profile URL</span>
+            </Button>
+            <Button
+              onClick={() => {
+                setSearchMode("name-platform")
+                setProfileUrl("")
+                setSelectedLocation("")
+              }}
+              variant={searchMode === "name-platform" ? "primary" : "secondary"}
+              size="xl"
+              className={`flex items-center gap-2 px-6 py-3 ${
+                searchMode === "name-platform"
+                  ? "bg-purple-600 hover:bg-purple-700 text-white"
+                  : "bg-gray-800 hover:bg-gray-700 text-white border border-gray-700"
+              }`}
+            >
+              <User className="w-5 h-5" />
+              <span>Search by Name and Platform</span>
+            </Button>
+            <Button
+              onClick={() => setSearchMode("name-platform-location")}
+              variant={searchMode === "name-platform-location" ? "primary" : "secondary"}
+              size="xl"
+              className={`flex items-center gap-2 px-6 py-3 ${
+                searchMode === "name-platform-location"
+                  ? "bg-purple-600 hover:bg-purple-700 text-white"
+                  : "bg-gray-800 hover:bg-gray-700 text-white border border-gray-700"
+              }`}
+            >
+              <MapPin className="w-5 h-5" />
+              <span>Search by Name, Platform and Location</span>
+            </Button>
+          </div>
+
+          {/* Dynamic Search Bar */}
+          {searchMode && (
+            <div className="max-w-4xl mx-auto">
+              <div className="flex items-center gap-3 flex-wrap">
+                {/* Profile URL Mode */}
+                {searchMode === "profile-url" && (
+                  <>
+                    <div className="flex-1 relative min-w-[300px]">
+                      <Link2 className="absolute left-4 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
+                      <Input
+                        type="url"
+                        placeholder="Enter seller profile URL (e.g., https://jiji.ng/shop/...)"
+                        value={profileUrl}
+                        onChange={(e) => setProfileUrl(e.target.value)}
+                        onKeyPress={(e) => e.key === 'Enter' && handleSearch()}
+                        className="pl-12 pr-4 py-6 bg-gray-900 border-gray-700 text-white placeholder:text-gray-400 focus:border-purple-500 focus:ring-purple-500"
+                      />
+                    </div>
+                    <Button
+                      onClick={handleSearch}
+                      disabled={!profileUrl.trim() || isSearching}
+                      className="bg-purple-600 hover:bg-purple-700 text-white px-8 py-6 disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      {isSearching ? (
+                        <>
+                          <Loader2 className="w-5 h-5 mr-2 animate-spin" />
+                          Searching...
+                        </>
+                      ) : (
+                        <>
+                          <Search className="w-5 h-5 mr-2" />
+                          Search
+                        </>
+                      )}
+                    </Button>
+                  </>
+                )}
+
+                {/* Name and Platform Mode */}
+                {searchMode === "name-platform" && (
+                  <>
+                    <div className="flex-1 relative min-w-[200px]">
+                      <User className="absolute left-4 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
+                      <Input
+                        type="text"
+                        placeholder="Enter seller name or store name"
+                        value={sellerName}
+                        onChange={(e) => setSellerName(e.target.value)}
+                        onKeyPress={(e) => e.key === 'Enter' && handleSearch()}
+                        className="pl-12 pr-4 py-6 bg-gray-900 border-gray-700 text-white placeholder:text-gray-400 focus:border-purple-500 focus:ring-purple-500"
+                      />
+                    </div>
+                    <div className="w-64">
+                      <Select value={selectedPlatform} onValueChange={setSelectedPlatform}>
+                        <SelectTrigger className="w-full py-6 bg-gray-900 border-gray-700 text-white focus:border-purple-500 focus:ring-purple-500 hover:border-gray-600">
+                          <div className="flex items-center gap-2 w-full">
+                            <Laptop className="w-4 h-4 text-gray-400 flex-shrink-0" />
+                            <SelectValue placeholder="Select Platform" className="text-white" />
+                          </div>
+                        </SelectTrigger>
+                        <SelectContent className="bg-gray-900 border-gray-700">
+                          {platforms.map((platform) => (
+                            <SelectItem
+                              key={platform.value}
+                              value={platform.value}
+                              className="text-white focus:bg-gray-800 focus:text-white cursor-pointer"
+                            >
+                              {platform.label}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <Button
+                      onClick={handleSearch}
+                      disabled={!sellerName.trim() || !selectedPlatform || isSearching}
+                      className="bg-purple-600 hover:bg-purple-700 text-white px-8 py-6 disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      {isSearching ? (
+                        <>
+                          <Loader2 className="w-5 h-5 mr-2 animate-spin" />
+                          Searching...
+                        </>
+                      ) : (
+                        <>
+                          <Search className="w-5 h-5 mr-2" />
+                          Search
+                        </>
+                      )}
+                    </Button>
+                  </>
+                )}
+
+                {/* Name, Platform and Location Mode */}
+                {searchMode === "name-platform-location" && (
+                  <>
+                    <div className="flex-1 relative min-w-[200px]">
+                      <User className="absolute left-4 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
+                      <Input
+                        type="text"
+                        placeholder="Enter seller name or store name"
+                        value={sellerName}
+                        onChange={(e) => setSellerName(e.target.value)}
+                        onKeyPress={(e) => e.key === 'Enter' && handleSearch()}
+                        className="pl-12 pr-4 py-6 bg-gray-900 border-gray-700 text-white placeholder:text-gray-400 focus:border-purple-500 focus:ring-purple-500"
+                      />
+                    </div>
+                    <div className="w-56">
+                      <Select value={selectedPlatform} onValueChange={setSelectedPlatform}>
+                        <SelectTrigger className="w-full py-6 bg-gray-900 border-gray-700 text-white focus:border-purple-500 focus:ring-purple-500 hover:border-gray-600">
+                          <div className="flex items-center gap-2 w-full">
+                            <Laptop className="w-4 h-4 text-gray-400 flex-shrink-0" />
+                            <SelectValue placeholder="Select Platform" className="text-white" />
+                          </div>
+                        </SelectTrigger>
+                        <SelectContent className="bg-gray-900 border-gray-700">
+                          {platforms.map((platform) => (
+                            <SelectItem
+                              key={platform.value}
+                              value={platform.value}
+                              className="text-white focus:bg-gray-800 focus:text-white cursor-pointer"
+                            >
+                              {platform.label}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div className="flex-1 relative min-w-[200px]">
+                      <MapPin className="absolute left-4 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
+                      <Input
+                        type="text"
+                        placeholder="Enter location (e.g., Lagos, Nigeria)"
+                        value={selectedLocation}
+                        onChange={(e) => setSelectedLocation(e.target.value)}
+                        onKeyPress={(e) => e.key === 'Enter' && handleSearch()}
+                        className="pl-12 pr-4 py-6 bg-gray-900 border-gray-700 text-white placeholder:text-gray-400 focus:border-purple-500 focus:ring-purple-500"
+                      />
+                    </div>
+                    <Button
+                      onClick={handleSearch}
+                      disabled={!sellerName.trim() || !selectedPlatform || !selectedLocation.trim() || isSearching}
+                      className="bg-purple-600 hover:bg-purple-700 text-white px-8 py-6 disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      {isSearching ? (
+                        <>
+                          <Loader2 className="w-5 h-5 mr-2 animate-spin" />
+                          Searching...
+                        </>
+                      ) : (
+                        <>
+                          <Search className="w-5 h-5 mr-2" />
+                          Search
+                        </>
+                      )}
+                    </Button>
+                  </>
+                )}
+              </div>
+            </div>
+          )}
+
+          {/* Active Filters */}
+          {searchMode && (
+            <div className="max-w-4xl mx-auto">
+              <div className="flex items-center flex-wrap gap-2">
+                {/* Profile URL Filter */}
+                {searchMode === "profile-url" && profileUrl && (
+                  <div className="flex items-center gap-2 px-4 py-2 bg-gray-800 rounded-full border border-gray-700">
+                    <Link2 className="w-4 h-4 text-purple-400" />
+                    <span className="text-sm text-white max-w-xs truncate">{profileUrl}</span>
+                    <button
+                      onClick={() => {
+                        setProfileUrl("")
+                        setSearchMode(null)
+                      }}
+                      className="ml-1 hover:bg-gray-700 rounded-full p-0.5"
+                    >
+                      <X className="w-3 h-3 text-gray-400" />
+                    </button>
+                  </div>
+                )}
+
+                {/* Seller Name Filter */}
+                {(searchMode === "name-platform" || searchMode === "name-platform-location") && sellerName && (
+                  <div className="flex items-center gap-2 px-4 py-2 bg-gray-800 rounded-full border border-gray-700">
+                    <User className="w-4 h-4 text-purple-400" />
+                    <span className="text-sm text-white">{sellerName}</span>
+                    <button
+                      onClick={() => removeFilter('name')}
+                      className="ml-1 hover:bg-gray-700 rounded-full p-0.5"
+                    >
+                      <X className="w-3 h-3 text-gray-400" />
+                    </button>
+                  </div>
+                )}
+
+                {/* Platform Filter */}
+                {selectedPlatform && (
+                  <div className="flex items-center gap-2 px-4 py-2 bg-gray-800 rounded-full border border-gray-700">
+                    <Laptop className="w-4 h-4 text-purple-400" />
+                    <span className="text-sm text-white">
+                      {platforms.find(p => p.value === selectedPlatform)?.label || selectedPlatform}
+                    </span>
+                    <button
+                      onClick={() => removeFilter('platform')}
+                      className="ml-1 hover:bg-gray-700 rounded-full p-0.5"
+                    >
+                      <X className="w-3 h-3 text-gray-400" />
+                    </button>
+                  </div>
+                )}
+              
+                {/* Location Filter */}
+                {searchMode === "name-platform-location" && selectedLocation && (
+                  <div className="flex items-center gap-2 px-4 py-2 bg-gray-800 rounded-full border border-gray-700">
+                    <MapPin className="w-4 h-4 text-purple-400" />
+                    <span className="text-sm text-white">{selectedLocation}</span>
+                    <button
+                      onClick={() => removeFilter('location')}
+                      className="ml-1 hover:bg-gray-700 rounded-full p-0.5"
+                    >
+                      <X className="w-3 h-3 text-gray-400" />
+                    </button>
+                  </div>
+                )}
+
+                {/* Trust Score Filter (if added) */}
+                {minTrustScore !== null && (
+                  <div className="flex items-center gap-2 px-4 py-2 bg-gray-800 rounded-full border border-gray-700">
+                    <Shield className="w-4 h-4 text-purple-400" />
+                    <span className="text-sm text-white">Min Trust: {minTrustScore}%</span>
+                    <button
+                      onClick={() => removeFilter('trust')}
+                      className="ml-1 hover:bg-gray-700 rounded-full p-0.5"
+                    >
+                      <X className="w-3 h-3 text-gray-400" />
+                    </button>
+                  </div>
+                )}
+
+                {/* Clear All Button */}
+                {((searchMode === "profile-url" && profileUrl) ||
+                  (searchMode === "name-platform" && (sellerName || selectedPlatform)) ||
+                  (searchMode === "name-platform-location" && (sellerName || selectedPlatform || selectedLocation))) && (
+                  <button
+                    onClick={clearAllFilters}
+                    className="px-4 py-2 bg-red-900/50 hover:bg-red-900/70 rounded-full border border-red-700 text-sm text-red-200 transition-colors"
+                  >
+                    Clear All
+                  </button>
+                )}
+              </div>
+            </div>
+          )}
+
+          {/* Additional Filter Options */}
+          {showAllFilters && (
+            <div className="max-w-4xl mx-auto">
+              <div className="flex items-center gap-2 flex-wrap">
+                <button className="px-4 py-2 bg-gray-800 hover:bg-gray-700 rounded-full border border-gray-700 text-sm text-purple-200">
+                  Verified only
+                </button>
+                <button className="px-4 py-2 bg-gray-800 hover:bg-gray-700 rounded-full border border-gray-700 text-sm text-purple-200">
+                  High trust score (80+)
+                </button>
+                <button className="px-4 py-2 bg-gray-800 hover:bg-gray-700 rounded-full border border-gray-700 text-sm text-purple-200">
+                  Active sellers
+                </button>
+              </div>
+            </div>
+          )}
+        </div>
+        
+        {/* Seller Result Modal */}
+        {searchResult && (
+          <SellerResultModal
+            data={searchResult}
+            isOpen={showModal}
+            onClose={() => {
+              setShowModal(false)
+              setSearchResult(null)
+            }}
+          />
+        )}
+      </div>
+    )
+  }
+
+  // Original hero section for sellers and guests
   return (
     <div className="w-full px-6 py-12 bg-gradient-to-br from-blue-50 via-white to-yellow-50 animate-in fade-in duration-1000">
       <div className="max-w-7xl mx-auto">
