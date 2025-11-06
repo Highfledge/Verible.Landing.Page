@@ -68,8 +68,15 @@ export function QuickActions() {
 
     setIsLoadingFeedbacks(true)
     try {
-      // TODO: Replace with actual seller ID from profile
-      const sellerId = "68fb8d9ad8299bdd94be605d"
+      // First, get the seller profile to obtain the seller ID
+      const profileResponse = await sellersAPI.getMySellerProfile()
+      
+      if (!profileResponse.success || !profileResponse.data?.seller?._id) {
+        toast.error("Failed to get seller ID. Please try again.")
+        return
+      }
+
+      const sellerId = profileResponse.data.seller._id
       
       const response = await sellersAPI.getSellerFeedback(sellerId)
       
@@ -102,8 +109,15 @@ export function QuickActions() {
 
     setIsLoadingAnalytics(true)
     try {
-      // TODO: Replace with actual seller ID from profile
-      const sellerId = "68fb8d9ad8299bdd94be605d"
+      // First, get the seller profile to obtain the seller ID
+      const profileResponse = await sellersAPI.getMySellerProfile()
+      
+      if (!profileResponse.success || !profileResponse.data?.seller?._id) {
+        toast.error("Failed to get seller ID. Please try again.")
+        return
+      }
+
+      const sellerId = profileResponse.data.seller._id
       
       const response = await sellersAPI.getSellerAnalytics(sellerId)
       
