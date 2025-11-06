@@ -260,6 +260,12 @@ export const sellersAPI = {
   getSellerById: async (sellerId: string) => {
     const response = await apiClient.get(`/api/sellers/${sellerId}`)
     return response.data
+  },
+
+  // Recalculate seller score
+  recalculateScore: async (sellerId: string) => {
+    const response = await apiClient.post(`/api/sellers/${sellerId}/recalculate-score`)
+    return response.data
   }
 }
 

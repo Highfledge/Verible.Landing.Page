@@ -1,7 +1,7 @@
 "use client"
 
 import { Button } from "@/components/ui/button"
-import { User, Play, Home, ShoppingCart, BarChart3, Settings } from "lucide-react"
+import { User, Home, ShoppingCart, BarChart3, Settings } from "lucide-react"
 import Image from "next/image"
 import Link from "next/link"
 import { useAuth } from "@/lib/stores/auth-store"
@@ -102,14 +102,6 @@ export function StickyBottomBar() {
                 className="w-11 h-11"
               />
               <span className="text-sm font-medium text-white">Verible</span>
-            </div>
-
-            {/* Middle - Demo */}
-            <div className="flex items-center space-x-2 absolute left-1/2 transform -translate-x-1/2">
-              <div className="w-8 h-8 rounded-full bg-gradient-to-br from-[#D59B0D] to-[#c18a0a] flex items-center justify-center">
-                <Play className="w-4 h-4 text-white" />
-              </div>
-              <span className="text-sm font-medium text-white">Demo</span>
             </div>
 
             {/* Right - Login Button */}

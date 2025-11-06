@@ -2,8 +2,16 @@
 
 import { Button } from "@/components/ui/button"
 import { ArrowRight, Map } from "lucide-react"
+import { useAuth } from "@/lib/stores/auth-store"
 
 export function CTASection() {
+  const { isLoggedIn, user } = useAuth()
+  
+  // Only show for buyers or guests (not for sellers)
+  if (isLoggedIn && user?.role === "seller") {
+    return null
+  }
+
   return (
     <section className="w-full px-6 py-20 bg-white">
       <div className="max-w-4xl mx-auto">

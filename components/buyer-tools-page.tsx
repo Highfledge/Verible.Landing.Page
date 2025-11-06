@@ -145,7 +145,6 @@ export function BuyerToolsPage() {
 
             {/* Navigation */}
             <nav className="hidden md:flex items-center space-x-8">
-              <Link href="#" className="text-gray-600 hover:text-gray-900 font-medium">Demo</Link>
               <Link href="#" className="text-gray-600 hover:text-gray-900 font-medium">Platform</Link>
               <div className="relative" ref={languageRef}>
                 <button 

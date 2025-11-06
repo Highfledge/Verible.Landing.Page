@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Input } from "@/components/ui/input"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { ArrowRight, Download, Play, Search, X, Globe, DollarSign, Shield, ChevronDown, Laptop, Star, Bell, Lock, Link2, User, MapPin, Loader2 } from "lucide-react"
+import { ArrowRight, Download, Search, X, Globe, DollarSign, Shield, ChevronDown, Laptop, Star, Bell, Lock, Link2, User, MapPin, Loader2, TrendingUp, RefreshCw } from "lucide-react"
 import { useAuth } from "@/lib/stores/auth-store"
 import { sellersAPI } from "@/lib/api/client"
 import { toast } from "sonner"
@@ -29,6 +29,12 @@ export function HeroSection() {
   const [isSearching, setIsSearching] = useState(false)
   const [searchResult, setSearchResult] = useState<any | null>(null)
   const [showModal, setShowModal] = useState(false)
+  
+  // Seller profile state
+  const [sellerProfile, setSellerProfile] = useState<any | null>(null)
+  const [showSellerProfileModal, setShowSellerProfileModal] = useState(false)
+  const [isLoadingProfile, setIsLoadingProfile] = useState(false)
+  const [isRecalculating, setIsRecalculating] = useState(false)
 
   const platforms = [
     { value: "jiji", label: "Jiji" },
@@ -165,6 +171,57 @@ export function HeroSection() {
     setSelectedPlatform("")
     setSelectedLocation("")
     setMinTrustScore(null)
+  }
+
+  const handleViewSellerProfile = async () => {
+    setIsLoadingProfile(true)
+    try {
+      const response = await sellersAPI.getMySellerProfile()
+      
+      if (response.success && response.data?.seller) {
+        setSellerProfile(response.data)
+        setShowSellerProfileModal(true)
+      } else {
+        toast.error(response.message || "Failed to load seller profile")
+      }
+    } catch (error: any) {
+      console.error("Error loading seller profile:", error)
+      toast.error(error.response?.data?.message || "Failed to load seller profile. Please try again.")
+    } finally {
+      setIsLoadingProfile(false)
+    }
+  }
+
+  const handleRecalculateScore = async () => {
+    setIsRecalculating(true)
+    try {
+      // First, get the seller profile to obtain the seller ID
+      const profileResponse = await sellersAPI.getMySellerProfile()
+      
+      if (!profileResponse.success || !profileResponse.data?.seller?._id) {
+        toast.error("Failed to get seller ID. Please try again.")
+        return
+      }
+
+      const sellerId = profileResponse.data.seller._id
+      
+      // Then, recalculate the score
+      const response = await sellersAPI.recalculateScore(sellerId)
+      
+      if (response.success && response.data) {
+        // Transform the response to match the modal's expected format
+        setSellerProfile(response.data)
+        setShowSellerProfileModal(true)
+        toast.success("Score recalculated successfully!")
+      } else {
+        toast.error(response.message || "Failed to recalculate score")
+      }
+    } catch (error: any) {
+      console.error("Error recalculating score:", error)
+      toast.error(error.response?.data?.message || "Failed to recalculate score. Please try again.")
+    } finally {
+      setIsRecalculating(false)
+    }
   }
 
   // Buyer-focused dark hero section
@@ -543,7 +600,125 @@ export function HeroSection() {
     )
   }
 
-  // Original hero section for sellers and guests
+  // Seller-focused hero section
+  if (isSeller) {
+    return (
+      <div className="w-full px-6 py-24 lg:py-32 bg-gradient-to-br from-[#1D2973] via-[#1a2468] to-[#0f1538] text-white">
+        <div className="max-w-7xl mx-auto space-y-12">
+          {/* Headline */}
+          <div className="text-center space-y-6">
+            <h1 className="text-5xl lg:text-6xl font-bold text-purple-200">
+              Build Trust, Grow Your Business
+            </h1>
+            <p className="text-xl lg:text-2xl text-purple-100 max-w-3xl mx-auto leading-relaxed">
+              Get verified, earn buyer confidence, and boost your sales with instant seller verification and trust scores.
+            </p>
+          </div>
+
+          {/* Quick Stats */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-4xl mx-auto">
+            <div className="bg-white/10 backdrop-blur-sm rounded-xl p-6 border border-white/20">
+              <div className="flex items-center justify-center mb-3">
+                <Shield className="w-8 h-8 text-purple-300" />
+              </div>
+              <div className="text-3xl font-bold text-white mb-2">Get Verified</div>
+              <p className="text-purple-200 text-sm">Complete your profile verification to build trust</p>
+            </div>
+            <div className="bg-white/10 backdrop-blur-sm rounded-xl p-6 border border-white/20">
+              <div className="flex items-center justify-center mb-3">
+                <TrendingUp className="w-8 h-8 text-purple-300" />
+              </div>
+              <div className="text-3xl font-bold text-white mb-2">Track Performance</div>
+              <p className="text-purple-200 text-sm">Monitor your trust score and analytics</p>
+            </div>
+            <div className="bg-white/10 backdrop-blur-sm rounded-xl p-6 border border-white/20">
+              <div className="flex items-center justify-center mb-3">
+                <Star className="w-8 h-8 text-purple-300" />
+              </div>
+              <div className="text-3xl font-bold text-white mb-2">Grow Sales</div>
+              <p className="text-purple-200 text-sm">Stand out with verified seller badges</p>
+            </div>
+          </div>
+
+          {/* CTA Buttons */}
+          <div className="flex items-center justify-center gap-4 flex-wrap">
+            <Button
+              variant="primary"
+              size="xl"
+              className="flex items-center gap-2 px-8 py-4 bg-purple-600 hover:bg-purple-700 text-white disabled:opacity-50 disabled:cursor-not-allowed"
+              onClick={handleViewSellerProfile}
+              disabled={isLoadingProfile}
+            >
+              {isLoadingProfile ? (
+                <>
+                  <Loader2 className="w-5 h-5 animate-spin" />
+                  <span>Loading...</span>
+                </>
+              ) : (
+                <>
+                  <User className="w-5 h-5" />
+                  <span>My Seller Profile</span>
+                </>
+              )}
+            </Button>
+            <Button
+              variant="secondary"
+              size="xl"
+              className="flex items-center gap-2 px-8 py-4 bg-white/10 hover:bg-white/20 text-white border border-white/30 disabled:opacity-50 disabled:cursor-not-allowed"
+              onClick={handleRecalculateScore}
+              disabled={isRecalculating}
+            >
+              {isRecalculating ? (
+                <>
+                  <Loader2 className="w-5 h-5 animate-spin" />
+                  <span>Recalculating...</span>
+                </>
+              ) : (
+                <>
+                  <RefreshCw className="w-5 h-5" />
+                  <span>Recalculate My Score</span>
+                </>
+              )}
+            </Button>
+          </div>
+
+          {/* Social Proof */}
+          <div className="flex items-center justify-center gap-3">
+            <div className="flex -space-x-2">
+              {[1, 2, 3, 4, 5].map((i) => (
+                <div
+                  key={i}
+                  className="w-10 h-10 rounded-full bg-gradient-to-br from-purple-400 to-purple-600 border-2 border-[#1D2973] flex items-center justify-center text-sm font-semibold"
+                >
+                  {String.fromCharCode(64 + i)}
+                </div>
+              ))}
+            </div>
+            <div className="flex items-center gap-1">
+              {[1, 2, 3, 4, 5].map((i) => (
+                <Star key={i} className="w-5 h-5 text-yellow-400 fill-yellow-400" />
+              ))}
+            </div>
+            <span className="text-purple-100 text-sm lg:text-base">Trusted by 5,000+ sellers</span>
+          </div>
+        </div>
+
+        {/* Seller Profile Modal */}
+        {sellerProfile && (
+          <SellerResultModal
+            data={sellerProfile}
+            isOpen={showSellerProfileModal}
+            onClose={() => {
+              setShowSellerProfileModal(false)
+              setSellerProfile(null)
+            }}
+          />
+        )}
+      </div>
+    )
+  }
+
+  // Original hero section for guests
   return (
     <div className="w-full px-6 py-12 bg-gradient-to-br from-blue-50 via-white to-yellow-50 animate-in fade-in duration-1000">
       <div className="max-w-7xl mx-auto">
@@ -606,13 +781,6 @@ export function HeroSection() {
               <Button variant="secondary" size="xl" className="flex items-center space-x-2 hover:shadow-lg transition-all duration-300">
                 <Download className="w-5 h-5" />
                 <span>Download Extension</span>
-              </Button>
-              
-              <Button variant="tertiary" size="xl" className="flex items-center space-x-2 hover:shadow-lg transition-all duration-300" asChild>
-                <a href="/buyer-tools">
-                  <Play className="w-5 h-5" />
-                  <span>See Demo</span>
-                </a>
               </Button>
             </div>
 
