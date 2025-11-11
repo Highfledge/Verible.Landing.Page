@@ -1,0 +1,38 @@
+name: Docs check
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, ready_for_review]
+
+jobs:
+  require-docs:
+    if: ${{ !github.event.pull_request.draft }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Detect changed files vs base
+        id: diff
+        run: |
+          git fetch origin ${{ github.base_ref }} --depth=1
+          git diff --name-only origin/${{ github.base_ref }}... > changed.txt
+          echo "changed=$(tr '\n' ',' < changed.txt)" >> $GITHUB_OUTPUT
+
+      - name: Decide if docs are required
+        id: gate
+        run: |
+          # EDIT these to match your repo layout
+          CODE_CHANGED=$(grep -E '^(src/|server/|api/|app/|packages/|lib/).*' changed.txt || true)
+          DOCS_TOUCHED=$(grep -E '^(docs/|README.md|CHANGELOG.md|docs/adr/).*' changed.txt || true)
+          if [ -n "$CODE_CHANGED" ] && [ -z "$DOCS_TOUCHED" ]; then
+            echo "needs=true" >> $GITHUB_OUTPUT
+          else
+            echo "needs=false" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Fail if code changed but docs not updated
+        if: steps.gate.outputs.needs == 'true'
+        run: |
+          echo "::error::Code changed but docs weren’t updated. Please update README/docs or CHANGELOG (or explain why in the PR)."
+          exit 1
