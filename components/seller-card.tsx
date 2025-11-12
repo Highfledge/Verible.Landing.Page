@@ -10,17 +10,18 @@ import {
   Star, 
   MapPin, 
   Clock, 
-  Users, 
-  Package, 
   Shield, 
   Eye,
-  Heart,
   Flag,
   Send,
   X,
-  ThumbsUp
+  ThumbsUp,
+  ChevronRight,
+  Verified,
+  Globe,
+  Package,
+  MessageSquare
 } from "lucide-react"
-import Image from "next/image"
 import { ImageWithFallback } from "@/components/ui/image-with-fallback"
 import { cleanText } from "@/lib/utils/clean-data"
 
@@ -61,6 +62,67 @@ interface SellerCardProps {
   onViewProfile?: (seller: Seller) => void
 }
 
+// Convert pulse score (0-100) to star rating (0-5)
+const getStarRating = (pulseScore: number): number => {
+  return Math.round((pulseScore / 100) * 5 * 10) / 10 // Round to 1 decimal
+}
+
+// Get star display (filled/half/empty)
+const renderStars = (rating: number) => {
+  const fullStars = Math.floor(rating)
+  const hasHalfStar = rating % 1 >= 0.5
+  const emptyStars = 5 - fullStars - (hasHalfStar ? 1 : 0)
+
+  return (
+    <div className="flex items-center gap-0.5">
+      {Array.from({ length: fullStars }).map((_, i) => (
+        <Star key={`full-${i}`} className="w-4 h-4 fill-yellow-400 text-yellow-400" />
+      ))}
+      {hasHalfStar && (
+        <div className="relative w-4 h-4">
+          <Star className="w-4 h-4 fill-gray-300 text-gray-300 absolute" />
+          <div className="overflow-hidden w-1/2">
+            <Star className="w-4 h-4 fill-yellow-400 text-yellow-400" />
+          </div>
+        </div>
+      )}
+      {Array.from({ length: emptyStars }).map((_, i) => (
+        <Star key={`empty-${i}`} className="w-4 h-4 fill-gray-300 text-gray-300" />
+      ))}
+    </div>
+  )
+}
+
+// Get trust badge color based on score
+const getTrustBadgeColor = (score: number) => {
+  if (score >= 80) return "bg-green-500"
+  if (score >= 60) return "bg-yellow-500"
+  return "bg-red-500"
+}
+
+// Get trust label
+const getTrustLabel = (score: number) => {
+  if (score >= 90) return "Excellent"
+  if (score >= 80) return "Great"
+  if (score >= 70) return "Good"
+  if (score >= 60) return "Fair"
+  return "Poor"
+}
+
+// Get platform badge color
+const getPlatformColor = (platform: string) => {
+  const colors: Record<string, string> = {
+    facebook: "bg-blue-100 text-blue-700 border-blue-300",
+    jiji: "bg-yellow-100 text-yellow-700 border-yellow-300",
+    ebay: "bg-blue-100 text-blue-700 border-blue-300",
+    etsy: "bg-orange-100 text-orange-700 border-orange-300",
+    jumia: "bg-orange-100 text-orange-700 border-orange-300",
+    kijiji: "bg-red-100 text-red-700 border-red-300",
+    konga: "bg-green-100 text-green-700 border-green-300",
+  }
+  return colors[platform?.toLowerCase()] || "bg-gray-100 text-gray-700 border-gray-300"
+}
+
 export function SellerCard({ seller, onViewProfile }: SellerCardProps) {
   const [showFlagForm, setShowFlagForm] = useState(false)
   const [flagReason, setFlagReason] = useState("")
@@ -68,17 +130,10 @@ export function SellerCard({ seller, onViewProfile }: SellerCardProps) {
   const [showEndorseForm, setShowEndorseForm] = useState(false)
   const [endorseReason, setEndorseReason] = useState("")
   const [isEndorsing, setIsEndorsing] = useState(false)
-  const getScoreColor = (score: number) => {
-    if (score >= 80) return "text-green-600"
-    if (score >= 60) return "text-yellow-600"
-    return "text-red-600"
-  }
 
-  const getScoreBgColor = (score: number) => {
-    if (score >= 80) return "bg-green-100"
-    if (score >= 60) return "bg-yellow-100"
-    return "bg-red-100"
-  }
+  const starRating = getStarRating(seller.pulseScore)
+  const trustLabel = getTrustLabel(seller.pulseScore)
+  const accountAgeDays = Math.ceil((Date.now() - new Date(seller.firstSeen).getTime()) / (1000 * 60 * 60 * 24))
 
   const handleFlagSeller = async () => {
     if (!flagReason.trim()) {
@@ -121,228 +176,276 @@ export function SellerCard({ seller, onViewProfile }: SellerCardProps) {
   }
 
   return (
-    <div className="bg-white border border-gray-200 rounded-xl p-6 hover:shadow-lg transition-shadow duration-200">
-      {/* Header */}
-      <div className="flex items-start space-x-4 mb-4">
-        {/* Profile Picture */}
-        <div className="relative">
-          <ImageWithFallback
-            src={seller.profileData.profilePicture}
-            alt={seller.profileData.name || "Seller"}
-            width={60}
-            height={60}
-            className="rounded-full object-cover border-2 border-gray-200"
-            fallbackLetter={seller.profileData.name?.charAt(0) || "S"}
-          />
+    <div className="bg-white border border-gray-200 rounded-2xl shadow-sm hover:shadow-lg transition-all duration-300 overflow-hidden group">
+      {/* Trust Score Banner - Trustpilot Style */}
+      <div className={`${getTrustBadgeColor(seller.pulseScore)} px-6 py-4 text-white`}>
+        <div className="flex items-center justify-between">
+          <div className="flex items-center space-x-3">
+            <div className="bg-white/20 rounded-full p-2">
+              <Shield className="w-5 h-5" />
+            </div>
+            <div>
+              <p className="text-xs font-medium opacity-90 uppercase tracking-wide">Trust Score</p>
+              <p className="text-3xl font-bold">{seller.pulseScore}</p>
+            </div>
+            <div className="border-l border-white/30 pl-4">
+              <p className="text-sm font-semibold">{trustLabel}</p>
+              <p className="text-xs opacity-75 capitalize">{seller.confidenceLevel} Confidence</p>
+            </div>
+          </div>
           {(seller.verificationStatus === "verified" || seller.verificationStatus === "id-verified") && (
-            <div className="absolute -bottom-1 -right-1 w-5 h-5 bg-blue-500 rounded-full flex items-center justify-center">
-              <Shield className="w-3 h-3 text-white" />
+            <div className="flex items-center space-x-2 bg-white/20 rounded-full px-4 py-2">
+              <Verified className="w-4 h-4" />
+              <span className="text-sm font-medium capitalize">
+                {seller.verificationStatus.replace("-", " ")}
+              </span>
             </div>
           )}
         </div>
+      </div>
 
-        {/* Seller Info */}
-        <div className="flex-1 min-w-0">
-          <div className="flex items-center space-x-2 mb-1">
-            <h3 className="text-lg font-semibold text-gray-900 truncate">{cleanText(seller.profileData.name)}</h3>
-            <Badge 
-              variant={seller.verificationStatus === "verified" || seller.verificationStatus === "id-verified" ? "success" : "outline"}
-              className="text-xs"
-            >
-              {seller.verificationStatus === "verified" || seller.verificationStatus === "id-verified" ? "Verified" : "Unverified"}
-            </Badge>
+      {/* Main Content */}
+      <div className="p-6">
+        {/* Profile Header */}
+        <div className="flex items-start gap-4 mb-5">
+          {/* Profile Picture */}
+          <div className="relative flex-shrink-0">
+            <ImageWithFallback
+              src={seller.profileData.profilePicture}
+              alt={seller.profileData.name || "Seller"}
+              width={80}
+              height={80}
+              className="rounded-xl object-cover border-4 border-gray-100 shadow-md"
+              fallbackClassName="rounded-xl"
+              fallbackLetter={seller.profileData.name?.charAt(0)?.toUpperCase() || "S"}
+            />
             {seller.isClaimed && (
-              <Badge variant="outline" className="text-xs bg-green-50 text-green-600 border-green-200">
-                Claimed
-              </Badge>
+              <div className="absolute -bottom-1 -right-1 bg-green-500 rounded-full p-1.5 shadow-lg">
+                <Shield className="w-3 h-3 text-white" />
+              </div>
             )}
           </div>
-          
-          <div className="flex items-center space-x-2 text-sm text-gray-600 mb-2">
-            <MapPin className="w-4 h-4" />
-            <span className="truncate">{cleanText(seller.profileData.location)}</span>
-          </div>
 
-          <p className="text-sm text-gray-600 line-clamp-2">{cleanText(seller.profileData.bio)}</p>
-        </div>
-
-        {/* Pulse Score */}
-        <div className="text-center">
-          <div className={`w-12 h-12 rounded-full flex items-center justify-center text-lg font-bold ${getScoreBgColor(seller.pulseScore)} ${getScoreColor(seller.pulseScore)}`}>
-            {seller.pulseScore}
-          </div>
-          <p className="text-xs text-gray-600 mt-1">Pulse</p>
-        </div>
-      </div>
-
-      {/* Stats */}
-      <div className="grid grid-cols-2 gap-4 mb-4">
-        <div className="text-center p-3 bg-gray-50 rounded-lg">
-          <div className="text-lg font-bold text-blue-600">{seller.listingHistory.length}</div>
-          <div className="text-xs text-gray-600">Listings</div>
-        </div>
-        <div className="text-center p-3 bg-gray-50 rounded-lg">
-          <div className="text-lg font-bold text-green-600">{seller.isActive ? "Active" : "Inactive"}</div>
-          <div className="text-xs text-gray-600">Status</div>
-        </div>
-        <div className="text-center p-3 bg-gray-50 rounded-lg">
-          <div className="text-lg font-bold text-purple-600">{seller.platform}</div>
-          <div className="text-xs text-gray-600">Platform</div>
-        </div>
-        <div className="text-center p-3 bg-gray-50 rounded-lg">
-          <div className="text-lg font-bold text-orange-600">{seller.isClaimed ? "Yes" : "No"}</div>
-          <div className="text-xs text-gray-600">Claimed</div>
-        </div>
-      </div>
-
-      {/* Platform Badge */}
-      <div className="mb-4">
-        <div className="flex flex-wrap gap-1">
-          <Badge variant="outline" className="text-xs">
-            {seller.platform.charAt(0).toUpperCase() + seller.platform.slice(1)}
-          </Badge>
-          <Badge variant="outline" className="text-xs">
-            {seller.confidenceLevel.charAt(0).toUpperCase() + seller.confidenceLevel.slice(1)} Confidence
-          </Badge>
-          {seller.userId && (
-            <Badge variant="outline" className="text-xs bg-blue-50 text-blue-600 border-blue-200">
-              User Account
-            </Badge>
-          )}
-        </div>
-      </div>
-
-      {/* Footer */}
-      <div className="flex items-center justify-between mb-4">
-        <div className="flex items-center space-x-4 text-xs text-gray-500">
-          <div className="flex items-center space-x-1">
-            <Clock className="w-3 h-3" />
-            <span>{new Date(seller.lastSeen).toLocaleDateString()}</span>
-          </div>
-          <div className="flex items-center space-x-1">
-            <Users className="w-3 h-3" />
-            <span>{Math.ceil((Date.now() - new Date(seller.firstSeen).getTime()) / (1000 * 60 * 60 * 24))} days</span>
-          </div>
-        </div>
-      </div>
-
-      {/* Action Buttons */}
-      <div className="flex items-center space-x-2 mb-4">
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={() => setShowEndorseForm(true)}
-          className="flex items-center space-x-1 flex-1 text-green-600 hover:text-green-700 hover:bg-green-50"
-        >
-          <ThumbsUp className="w-4 h-4" />
-          <span>Endorse</span>
-        </Button>
-        <Button
-          size="sm"
-          onClick={() => onViewProfile?.(seller)}
-          className="flex items-center space-x-1 flex-1"
-        >
-          <Eye className="w-4 h-4" />
-          <span>View</span>
-        </Button>
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={() => setShowFlagForm(true)}
-          className="flex items-center space-x-1 text-red-600 hover:text-red-700 hover:bg-red-50"
-        >
-          <Flag className="w-4 h-4" />
-          <span>Flag</span>
-        </Button>
-      </div>
-
-      {/* Flag Form */}
-      {showFlagForm && (
-        <div className="border-t pt-4">
-          <div className="space-y-3">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Reason for flagging this seller:
-              </label>
-              <Textarea
-                value={flagReason}
-                onChange={(e) => setFlagReason(e.target.value)}
-                placeholder="Please provide a reason for flagging this seller..."
-                className="min-h-[80px] resize-none"
-                maxLength={500}
-              />
-              <div className="text-xs text-gray-500 mt-1">
-                {flagReason.length}/500 characters
+          {/* Seller Info */}
+          <div className="flex-1 min-w-0">
+            <div className="flex items-start justify-between mb-2">
+              <div className="flex-1 min-w-0">
+                <h3 className="text-xl font-bold text-gray-900 truncate mb-1">
+                  {cleanText(seller.profileData.name) || "Unknown Seller"}
+                </h3>
+                <div className="flex items-center gap-2 flex-wrap">
+                  <Badge className={`border ${getPlatformColor(seller.platform)} text-xs`}>
+                    {seller.platform.charAt(0).toUpperCase() + seller.platform.slice(1)}
+                  </Badge>
+                  {seller.userId && (
+                    <Badge variant="outline" className="text-xs bg-blue-50 text-blue-600 border-blue-200">
+                      User Account
+                    </Badge>
+                  )}
+                </div>
               </div>
             </div>
-            <div className="flex items-center space-x-2">
-              <Button
-                size="sm"
-                onClick={handleFlagSeller}
-                disabled={isFlagging || !flagReason.trim()}
-                className="flex items-center space-x-1 bg-red-600 hover:bg-red-700"
-              >
-                <Send className="w-4 h-4" />
-                <span>{isFlagging ? "Flagging..." : "Flag Seller"}</span>
-              </Button>
-              <Button
-                variant="outline"
-                size="sm"
+            
+            {/* Location */}
+            {seller.profileData.location && (
+              <div className="flex items-center space-x-1 text-sm text-gray-600 mb-3">
+                <MapPin className="w-4 h-4 flex-shrink-0" />
+                <span className="truncate">{cleanText(seller.profileData.location)}</span>
+              </div>
+            )}
+
+            {/* Star Rating - Trustpilot Style */}
+            <div className="bg-gray-50 rounded-lg p-4 mb-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <div className="flex items-center space-x-2 mb-1">
+                    {renderStars(starRating)}
+                    <span className="text-xl font-bold text-gray-900">{starRating}</span>
+                    <span className="text-gray-600">/ 5</span>
+                  </div>
+                  <p className="text-xs text-gray-600">
+                    Based on trust score analysis
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Stats Grid - Minimalist */}
+        <div className="grid grid-cols-3 gap-3 mb-5">
+          <div className="text-center p-3 bg-gray-50 rounded-lg">
+            <div className="flex items-center justify-center mb-1">
+              <Package className="w-4 h-4 text-blue-600" />
+            </div>
+            <div className="text-lg font-bold text-gray-900">{seller.listingHistory.length}</div>
+            <div className="text-xs text-gray-600">Listings</div>
+          </div>
+          <div className="text-center p-3 bg-gray-50 rounded-lg">
+            <div className="flex items-center justify-center mb-1">
+              <Clock className="w-4 h-4 text-orange-600" />
+            </div>
+            <div className="text-lg font-bold text-gray-900">{accountAgeDays}</div>
+            <div className="text-xs text-gray-600">Days Active</div>
+          </div>
+          <div className="text-center p-3 bg-gray-50 rounded-lg">
+            <div className="flex items-center justify-center mb-1">
+              {seller.isActive ? (
+                <Shield className="w-4 h-4 text-green-600" />
+              ) : (
+                <Shield className="w-4 h-4 text-gray-400" />
+              )}
+            </div>
+            <div className={`text-lg font-bold ${seller.isActive ? "text-green-600" : "text-gray-400"}`}>
+              {seller.isActive ? "Active" : "Inactive"}
+            </div>
+            <div className="text-xs text-gray-600">Status</div>
+          </div>
+        </div>
+
+        {/* Bio Preview */}
+        {seller.profileData.bio && (
+          <p className="text-sm text-gray-600 line-clamp-2 mb-5 leading-relaxed">
+            {cleanText(seller.profileData.bio)}
+          </p>
+        )}
+
+        {/* Action Buttons - Trustpilot Style */}
+        <div className="flex items-center gap-2 pt-4 border-t border-gray-100">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => onViewProfile?.(seller)}
+            className="flex items-center space-x-2 flex-1 group/btn hover:bg-blue-50 hover:border-blue-300 hover:text-blue-700 transition-colors"
+          >
+            <Eye className="w-4 h-4" />
+            <span>View Details</span>
+            <ChevronRight className="w-4 h-4 opacity-0 group-hover/btn:opacity-100 transition-opacity" />
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setShowEndorseForm(true)}
+            className="flex items-center space-x-1 px-3 text-green-600 hover:text-green-700 hover:bg-green-50 hover:border-green-300 border-green-200 transition-colors"
+            title="Endorse seller"
+          >
+            <ThumbsUp className="w-4 h-4" />
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setShowFlagForm(true)}
+            className="flex items-center space-x-1 px-3 text-red-600 hover:text-red-700 hover:bg-red-50 hover:border-red-300 border-red-200 transition-colors"
+            title="Flag seller"
+          >
+            <Flag className="w-4 h-4" />
+          </Button>
+        </div>
+      </div>
+
+      {/* Flag Form Modal */}
+      {showFlagForm && (
+        <div className="border-t border-gray-200 bg-gray-50 p-4">
+          <div className="space-y-3">
+            <div className="flex items-center justify-between mb-2">
+              <label className="block text-sm font-semibold text-gray-900">
+                Flag this seller
+              </label>
+              <button
                 onClick={() => {
                   setShowFlagForm(false)
                   setFlagReason("")
                 }}
-                className="flex items-center space-x-1"
+                className="text-gray-400 hover:text-gray-600 transition-colors"
               >
                 <X className="w-4 h-4" />
-                <span>Cancel</span>
-              </Button>
+              </button>
+            </div>
+            <Textarea
+              value={flagReason}
+              onChange={(e) => setFlagReason(e.target.value)}
+              placeholder="Please provide a reason for flagging this seller..."
+              className="min-h-[80px] resize-none text-sm"
+              maxLength={500}
+            />
+            <div className="flex items-center justify-between">
+              <span className="text-xs text-gray-500">
+                {flagReason.length}/500 characters
+              </span>
+              <div className="flex items-center gap-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => {
+                    setShowFlagForm(false)
+                    setFlagReason("")
+                  }}
+                >
+                  Cancel
+                </Button>
+                <Button
+                  size="sm"
+                  onClick={handleFlagSeller}
+                  disabled={isFlagging || !flagReason.trim()}
+                  className="bg-red-600 hover:bg-red-700 text-white"
+                >
+                  {isFlagging ? "Flagging..." : "Flag Seller"}
+                </Button>
+              </div>
             </div>
           </div>
         </div>
       )}
 
-      {/* Endorse Form */}
+      {/* Endorse Form Modal */}
       {showEndorseForm && (
-        <div className="border-t pt-4">
+        <div className="border-t border-gray-200 bg-gray-50 p-4">
           <div className="space-y-3">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Reason for endorsing this seller:
+            <div className="flex items-center justify-between mb-2">
+              <label className="block text-sm font-semibold text-gray-900">
+                Endorse this seller
               </label>
-              <Textarea
-                value={endorseReason}
-                onChange={(e) => setEndorseReason(e.target.value)}
-                placeholder="Please provide a reason for endorsing this seller..."
-                className="min-h-[80px] resize-none"
-                maxLength={500}
-              />
-              <div className="text-xs text-gray-500 mt-1">
-                {endorseReason.length}/500 characters
-              </div>
-            </div>
-            <div className="flex items-center space-x-2">
-              <Button
-                size="sm"
-                onClick={handleEndorseSeller}
-                disabled={isEndorsing || !endorseReason.trim()}
-                className="flex items-center space-x-1 bg-green-600 hover:bg-green-700"
-              >
-                <Send className="w-4 h-4" />
-                <span>{isEndorsing ? "Endorsing..." : "Endorse Seller"}</span>
-              </Button>
-              <Button
-                variant="outline"
-                size="sm"
+              <button
                 onClick={() => {
                   setShowEndorseForm(false)
                   setEndorseReason("")
                 }}
-                className="flex items-center space-x-1"
+                className="text-gray-400 hover:text-gray-600 transition-colors"
               >
                 <X className="w-4 h-4" />
-                <span>Cancel</span>
-              </Button>
+              </button>
+            </div>
+            <Textarea
+              value={endorseReason}
+              onChange={(e) => setEndorseReason(e.target.value)}
+              placeholder="Please provide a reason for endorsing this seller..."
+              className="min-h-[80px] resize-none text-sm"
+              maxLength={500}
+            />
+            <div className="flex items-center justify-between">
+              <span className="text-xs text-gray-500">
+                {endorseReason.length}/500 characters
+              </span>
+              <div className="flex items-center gap-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => {
+                    setShowEndorseForm(false)
+                    setEndorseReason("")
+                  }}
+                >
+                  Cancel
+                </Button>
+                <Button
+                  size="sm"
+                  onClick={handleEndorseSeller}
+                  disabled={isEndorsing || !endorseReason.trim()}
+                  className="bg-green-600 hover:bg-green-700 text-white"
+                >
+                  {isEndorsing ? "Endorsing..." : "Endorse Seller"}
+                </Button>
+              </div>
             </div>
           </div>
         </div>
