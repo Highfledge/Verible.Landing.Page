@@ -1,0 +1,140 @@
+{
+    "success": true,
+    "message": "Profile extracted and scored successfully",
+    "data": {
+        "seller": {
+            "userId": null,
+            "sellerId": "extracted-1762941093400-1",
+            "platform": "jiji",
+            "profileUrl": "https://jiji.ng/shop/3020026",
+            "profileData": {
+                "name": "![tre.gif](https://jiji.ng/tre.gif)",
+                "profilePicture": "https://jiji.ng/tre.gif",
+                "location": "the tarred rd reciept and...\\\\",
+                "bio": "seller"
+            },
+            "marketplaceData": {
+                "accountAge": 0,
+                "totalListings": 50,
+                "avgRating": 0,
+                "totalReviews": 10,
+                "responseRate": 0,
+                "verificationStatus": "id-verified",
+                "lastSeen": "18 min ago",
+                "followers": 0,
+                "categories": [
+                    {
+                        "name": "![](https://pictures-nigeria.jijistatic.net/185681066_MTExLTE0OC0yNWFlZDlhY2I5.jpg)",
+                        "count": 0,
+                        "_id": "691458a5540f84ffb9c28f7a"
+                    },
+                    {
+                        "name": "121ads",
+                        "count": 0,
+                        "_id": "691458a5540f84ffb9c28f7b"
+                    }
+                ]
+            },
+            "recentListings": [],
+            "trustIndicators": {
+                "hasProfilePicture": true,
+                "hasLocation": true,
+                "hasBio": true,
+                "accountAge": 0,
+                "totalReviews": 10,
+                "avgRating": 0,
+                "verificationStatus": "id-verified",
+                "followers": 0,
+                "lastSeen": "18 min ago"
+            },
+            "pulseScore": 87,
+            "confidenceLevel": "medium",
+            "lastScored": "2025-11-12T09:51:33.400Z",
+            "verificationStatus": "unverified",
+            "listingHistory": [],
+            "scoringFactors": {
+                "urgencyScore": 0,
+                "profileCompleteness": 80,
+                "priceAnomaly": 0,
+                "listingActivity": 0,
+                "userFeedback": 0
+            },
+            "isActive": true,
+            "isClaimed": false,
+            "_id": "691458a5540f84ffb9c28f79",
+            "flags": [],
+            "endorsements": [],
+            "firstSeen": "2025-11-12T09:51:33.407Z",
+            "lastSeen": "2025-11-12T09:51:33.407Z",
+            "createdAt": "2025-11-12T09:51:33.413Z",
+            "updatedAt": "2025-11-12T09:51:33.413Z"
+        },
+        "extractedData": {
+            "platform": "jiji",
+            "profileUrl": "https://jiji.ng/shop/3020026",
+            "profileData": {
+                "name": "![tre.gif](https://jiji.ng/tre.gif)",
+                "profilePicture": "https://jiji.ng/tre.gif",
+                "location": "the tarred rd reciept and...\\\\",
+                "bio": "seller"
+            },
+            "marketplaceData": {
+                "accountAge": 0,
+                "totalListings": 50,
+                "avgRating": 0,
+                "totalReviews": 10,
+                "responseRate": 0,
+                "verificationStatus": "id-verified",
+                "lastSeen": "18 min ago",
+                "followers": 0,
+                "categories": [
+                    {
+                        "name": "![](https://pictures-nigeria.jijistatic.net/185681066_MTExLTE0OC0yNWFlZDlhY2I5.jpg)",
+                        "count": 0
+                    },
+                    {
+                        "name": "121ads",
+                        "count": 0
+                    }
+                ]
+            },
+            "recentListings": [],
+            "trustIndicators": {
+                "hasProfilePicture": true,
+                "hasLocation": true,
+                "hasBio": true,
+                "accountAge": 0,
+                "totalReviews": 10,
+                "avgRating": 0,
+                "verificationStatus": "id-verified",
+                "followers": 0,
+                "lastSeen": "18 min ago"
+            }
+        },
+        "scoringResult": {
+            "pulseScore": 87,
+            "confidenceLevel": "medium",
+            "recommendations": [
+                {
+                    "type": "positive",
+                    "message": "High trust score indicates reliable seller with excellent track record",
+                    "action": "Safe to Purchase"
+                },
+                {
+                    "type": "warning",
+                    "message": "Poor ratings or insufficient reviews - high transaction risk",
+                    "action": "Review Feedback History"
+                }
+            ],
+            "trustIndicators": {
+                "accountVerification": "100%",
+                "transactionHistory": "40%",
+                "communicationQuality": "0%",
+                "disputeResolution": "0%"
+            },
+            "riskFactors": [
+                "Poor customer ratings"
+            ]
+        }
+    }
+}

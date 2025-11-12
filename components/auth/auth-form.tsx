@@ -165,14 +165,10 @@ export function AuthForm({ mode }: AuthFormProps) {
         {/* Form Card */}
         <div className="bg-white rounded-2xl shadow-lg border border-gray-100 p-8">
           {/* Tabs */}
-          <Tabs defaultValue={mode} className="w-full">
+          <Tabs value={mode} onValueChange={(value) => router.push(`/auth?mode=${value}`)} className="w-full">
             <TabsList className="grid w-full grid-cols-2 mb-8">
-              <TabsTrigger value="login" asChild>
-                <Link href="/auth?mode=login">Sign In</Link>
-              </TabsTrigger>
-              <TabsTrigger value="signup" asChild>
-                <Link href="/auth?mode=signup">Sign Up</Link>
-              </TabsTrigger>
+              <TabsTrigger value="login">Sign In</TabsTrigger>
+              <TabsTrigger value="signup">Sign Up</TabsTrigger>
             </TabsList>
 
             
