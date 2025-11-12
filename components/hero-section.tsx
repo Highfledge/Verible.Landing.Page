@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Input } from "@/components/ui/input"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { ArrowRight, Download, Search, X, Globe, DollarSign, Shield, ChevronDown, Laptop, Star, Bell, Lock, Link2, User, MapPin, Loader2, TrendingUp, RefreshCw } from "lucide-react"
+import { ArrowRight, Download, Search, X, Shield, Laptop, Star, Link2, User, MapPin, Loader2, TrendingUp, RefreshCw } from "lucide-react"
 import { useAuth } from "@/lib/stores/auth-store"
 import { sellersAPI } from "@/lib/api/client"
 import { toast } from "sonner"
@@ -778,9 +778,15 @@ export function HeroSection() {
                 </Button>
               )}
               
-              <Button variant="secondary" size="xl" className="flex items-center space-x-2 hover:shadow-lg transition-all duration-300">
-                <Download className="w-5 h-5" />
-                <span>Download Extension</span>
+              <Button variant="secondary" size="xl" className="flex items-center space-x-2 hover:shadow-lg transition-all duration-300" asChild>
+                <a 
+                  href="https://chromewebstore.google.com/detail/mfpkpchpddnicfddlpfdnpcodfmeoiha?utm_source=item-share-cb" 
+                  target="_blank" 
+                  rel="noopener noreferrer"
+                >
+                  <Download className="w-5 h-5" />
+                  <span>Download Extension</span>
+                </a>
               </Button>
             </div>
 
