@@ -15,7 +15,7 @@ export function Footer() {
                 alt="Verible Logo"
                 width={48}
                 height={48}
-                className="w-12 h-12"
+                className="w-12 h-12 rounded-lg"
               />
               <span className="text-2xl font-bold">Verible</span>
             </div>
@@ -30,7 +30,7 @@ export function Footer() {
             <ul className="space-y-2 text-sm">
               <li><a href="#" className="text-blue-100 hover:text-white transition-colors">Features</a></li>
               <li><a href="#" className="text-blue-100 hover:text-white transition-colors">Pricing</a></li>
-              <li><a href="#" className="text-blue-100 hover:text-white transition-colors">Chrome Extension</a></li>
+              <li><a href="https://chromewebstore.google.com/detail/mfpkpchpddnicfddlpfdnpcodfmeoiha?utm_source=item-share-cb" target="_blank" rel="noopener noreferrer" className="text-blue-100 hover:text-white transition-colors">Chrome Extension</a></li>
               <li><a href="#" className="text-blue-100 hover:text-white transition-colors">API Access</a></li>
             </ul>
           </div>

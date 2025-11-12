@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useRef, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Input } from "@/components/ui/input"
@@ -9,37 +9,129 @@ import { ArrowRight, Download, Search, X, Shield, Laptop, Star, Link2, User, Map
 import { useAuth } from "@/lib/stores/auth-store"
 import { sellersAPI } from "@/lib/api/client"
 import { toast } from "sonner"
+import { SellerProfileDisplay } from "@/components/seller-profile-display"
 import { SellerResultModal } from "@/components/seller-result-modal"
+import { cleanObjectData } from "@/lib/utils/clean-data"
 
 type SearchMode = "profile-url" | "name-platform" | "name-platform-location" | null
+
+type SearchState = {
+  mode: SearchMode
+  profileUrl: string
+  sellerName: string
+  selectedPlatform: string
+  selectedLocation: string
+  minTrustScore: number | null
+  showAllFilters: boolean
+  isSearching: boolean
+  result: any | null
+}
+
+type ModalState = {
+  showSearchResult: boolean
+  showSellerProfile: boolean
+}
+
+type SellerProfileState = {
+  data: any | null
+  isLoading: boolean
+  isRecalculating: boolean
+}
+
+const INITIAL_SEARCH_STATE: SearchState = {
+  mode: null,
+  profileUrl: "",
+  sellerName: "",
+  selectedPlatform: "",
+  selectedLocation: "",
+  minTrustScore: null,
+  showAllFilters: false,
+  isSearching: false,
+  result: null,
+}
+
+const INITIAL_MODAL_STATE: ModalState = {
+  showSearchResult: false,
+  showSellerProfile: false,
+}
+
+const INITIAL_SELLER_PROFILE_STATE: SellerProfileState = {
+  data: null,
+  isLoading: false,
+  isRecalculating: false,
+}
 
 export function HeroSection() {
   const { user, isLoggedIn } = useAuth()
   const isSeller = user?.role === "seller"
   const isBuyer = isLoggedIn && user?.role === "user"
   
-  // Buyer search state
-  const [searchMode, setSearchMode] = useState<SearchMode>(null)
-  const [profileUrl, setProfileUrl] = useState("")
-  const [sellerName, setSellerName] = useState("")
-  const [selectedPlatform, setSelectedPlatform] = useState<string>("")
-  const [selectedLocation, setSelectedLocation] = useState("")
-  const [minTrustScore, setMinTrustScore] = useState<number | null>(null)
-  const [showAllFilters, setShowAllFilters] = useState(false)
-  const [isSearching, setIsSearching] = useState(false)
-  const [searchResult, setSearchResult] = useState<any | null>(null)
-  const [showModal, setShowModal] = useState(false)
-  
-  // Seller profile state
-  const [sellerProfile, setSellerProfile] = useState<any | null>(null)
-  const [showSellerProfileModal, setShowSellerProfileModal] = useState(false)
-  const [isLoadingProfile, setIsLoadingProfile] = useState(false)
-  const [isRecalculating, setIsRecalculating] = useState(false)
+  // Consolidated state
+  const [searchState, setSearchState] = useState<SearchState>(INITIAL_SEARCH_STATE)
+  const [modalState, setModalState] = useState<ModalState>(INITIAL_MODAL_STATE)
+  const [sellerProfileState, setSellerProfileState] = useState<SellerProfileState>(INITIAL_SELLER_PROFILE_STATE)
+  const resultsRef = useRef<HTMLDivElement>(null)
+
+  // Destructured for easier access
+  const {
+    mode: searchMode,
+    profileUrl,
+    sellerName,
+    selectedPlatform,
+    selectedLocation,
+    minTrustScore,
+    showAllFilters,
+    isSearching,
+    result: searchResult,
+  } = searchState
+
+  const { showSearchResult: showModal, showSellerProfile: showSellerProfileModal } = modalState
+  const { data: sellerProfile, isLoading: isLoadingProfile, isRecalculating } = sellerProfileState
+
+  // Auto-scroll to results when searchResult becomes available
+  useEffect(() => {
+    if (searchResult && resultsRef.current) {
+      // Small delay to ensure the DOM is updated and rendered
+      const scrollTimer = setTimeout(() => {
+        const element = resultsRef.current
+        if (element) {
+          const offset = 80 // Offset for fixed header/navigation
+          const elementPosition = element.getBoundingClientRect().top
+          const offsetPosition = elementPosition + window.pageYOffset - offset
+
+          window.scrollTo({
+            top: offsetPosition,
+            behavior: 'smooth'
+          })
+        }
+      }, 400) // Wait for animation to complete
+
+      return () => clearTimeout(scrollTimer)
+    }
+  }, [searchResult])
 
   const platforms = [
-    { value: "jiji", label: "Jiji" },
     { value: "facebook", label: "Facebook Marketplace" },
+    { value: "jiji", label: "Jiji" },
+    { value: "ebay", label: "eBay" },
+    { value: "etsy", label: "Etsy" },
+    { value: "jumia", label: "Jumia" },
+    { value: "kijiji", label: "Kijiji" },
+    { value: "konga", label: "Konga" },
   ]
+
+  // Helper functions to update state
+  const updateSearchState = (updates: Partial<SearchState>) => {
+    setSearchState((prev) => ({ ...prev, ...updates }))
+  }
+
+  const updateModalState = (updates: Partial<ModalState>) => {
+    setModalState((prev) => ({ ...prev, ...updates }))
+  }
+
+  const updateSellerProfileState = (updates: Partial<SellerProfileState>) => {
+    setSellerProfileState((prev) => ({ ...prev, ...updates }))
+  }
 
   const handleSearch = async () => {
     if (searchMode === "profile-url") {
@@ -48,24 +140,50 @@ export function HeroSection() {
         return
       }
       
-      setIsSearching(true)
+      updateSearchState({ isSearching: true, result: null })
       try {
         const response = await sellersAPI.scoreByUrl({
           profileUrl: profileUrl.trim()
         })
 
         if (response.success && response.data) {
-          setSearchResult(response.data)
-          setShowModal(true)
-          toast.success("Seller found successfully!")
+          // Clean the data first to remove escaped backslashes
+          const cleanedData = cleanObjectData(response.data)
+          
+          // Normalize score-by-url shape to match SellerProfileDisplay expectations
+          // The API response already has the correct structure, so we can use it directly
+          const normalized = cleanedData?.seller
+            ? cleanedData
+            : {
+                seller: {
+                  profileData: cleanedData?.profileData || {},
+                  pulseScore: cleanedData?.scoringResult?.pulseScore ?? 0,
+                  confidenceLevel: cleanedData?.scoringResult?.confidenceLevel || 'low',
+                  verificationStatus: cleanedData?.marketplaceData?.verificationStatus || 'unverified',
+                  lastSeen: cleanedData?.marketplaceData?.lastSeen || '',
+                  verification: cleanedData?.marketplaceData?.verificationStatus,
+                },
+                extractedData: {
+                  platform: cleanedData?.marketplaceData?.platform || 'unknown',
+                  profileUrl: profileUrl.trim(),
+                  profileData: cleanedData?.profileData || {},
+                  marketplaceData: cleanedData?.marketplaceData || {},
+                  recentListings: cleanedData?.recentListings || [],
+                  trustIndicators: cleanedData?.scoringResult?.trustIndicators || {},
+                },
+                scoringResult: cleanedData?.scoringResult || {},
+              }
+
+          updateSearchState({ result: normalized, isSearching: false })
+          toast.success("Seller profile analyzed successfully!")
         } else {
+          updateSearchState({ isSearching: false })
           toast.error(response.message || "No seller found with that profile URL")
         }
       } catch (error: any) {
         console.error("Search error:", error)
+        updateSearchState({ isSearching: false })
         toast.error(error.response?.data?.message || "Failed to search seller. Please try again.")
-      } finally {
-        setIsSearching(false)
       }
     } else if (searchMode === "name-platform") {
       if (!sellerName.trim() || !selectedPlatform) {
@@ -73,7 +191,7 @@ export function HeroSection() {
         return
       }
       
-      setIsSearching(true)
+      updateSearchState({ isSearching: true, result: null })
       try {
         const response = await sellersAPI.searchByNameAndPlatform({
           name: sellerName.trim(),
@@ -81,17 +199,18 @@ export function HeroSection() {
         })
 
         if (response.success && response.data?.seller) {
-          setSearchResult(response.data)
-          setShowModal(true)
+          // Clean and normalize the data
+          const cleanedData = cleanObjectData(response.data)
+          updateSearchState({ result: cleanedData, isSearching: false })
           toast.success("Seller found successfully!")
         } else {
+          updateSearchState({ isSearching: false })
           toast.error(response.message || "No seller found with that name and platform")
         }
       } catch (error: any) {
         console.error("Search error:", error)
+        updateSearchState({ isSearching: false })
         toast.error(error.response?.data?.message || "Failed to search seller. Please try again.")
-      } finally {
-        setIsSearching(false)
       }
     } else if (searchMode === "name-platform-location") {
       if (!sellerName.trim() || !selectedPlatform || !selectedLocation.trim()) {
@@ -99,7 +218,7 @@ export function HeroSection() {
         return
       }
       
-      setIsSearching(true)
+      updateSearchState({ isSearching: true, result: null })
       try {
         const response = await sellersAPI.searchByNamePlatformLocation({
           name: sellerName.trim(),
@@ -108,97 +227,124 @@ export function HeroSection() {
         })
 
         if (response.success && response.data?.sellers && response.data.sellers.length > 0) {
-          // The API returns an array of sellers, we'll show the first one in the modal
-          // Transform the response to match the expected format for the modal
+          // The API returns an array of sellers, we'll show the first one
+          // Transform the response to match the expected format
           const firstSeller = response.data.sellers[0]
-          setSearchResult({
+          const cleanedData = cleanObjectData({
             seller: firstSeller,
             pagination: response.data.pagination
           })
-          setShowModal(true)
+          
+          updateSearchState({
+            result: cleanedData,
+            isSearching: false
+          })
           if (response.data.sellers.length > 1) {
             toast.success(`Found ${response.data.sellers.length} sellers. Showing first result.`)
           } else {
             toast.success("Seller found successfully!")
           }
         } else {
+          updateSearchState({ isSearching: false })
           toast.error(response.message || "No sellers found matching your criteria")
         }
       } catch (error: any) {
         console.error("Search error:", error)
+        updateSearchState({ isSearching: false })
         toast.error(error.response?.data?.message || "Failed to search sellers. Please try again.")
-      } finally {
-        setIsSearching(false)
       }
     }
   }
 
   const removeFilter = (type: 'platform' | 'location' | 'trust' | 'name') => {
     if (type === 'platform') {
-      setSelectedPlatform("")
       // If platform is required for current mode, clear mode
       if (searchMode === "name-platform" || searchMode === "name-platform-location") {
         if (searchMode === "name-platform") {
-          setSearchMode(null)
-          setSellerName("")
+          updateSearchState({ 
+            selectedPlatform: "",
+            mode: null,
+            sellerName: ""
+          })
         } else {
-          setSearchMode("name-platform")
+          updateSearchState({ 
+            selectedPlatform: "",
+            mode: "name-platform"
+          })
         }
+      } else {
+        updateSearchState({ selectedPlatform: "" })
       }
     }
     if (type === 'location') {
-      setSelectedLocation("")
       // If location is required for current mode, switch to name-platform mode
       if (searchMode === "name-platform-location") {
-        setSearchMode("name-platform")
+        updateSearchState({ 
+          selectedLocation: "",
+          mode: "name-platform"
+        })
+      } else {
+        updateSearchState({ selectedLocation: "" })
       }
     }
-    if (type === 'trust') setMinTrustScore(null)
+    if (type === 'trust') {
+      updateSearchState({ minTrustScore: null })
+    }
     if (type === 'name') {
-      setSellerName("")
       if (searchMode === "name-platform" || searchMode === "name-platform-location") {
-        setSearchMode(null)
-        setSelectedPlatform("")
-        setSelectedLocation("")
+        updateSearchState({
+          sellerName: "",
+          mode: null,
+          selectedPlatform: "",
+          selectedLocation: ""
+        })
+      } else {
+        updateSearchState({ sellerName: "" })
       }
     }
   }
 
   const clearAllFilters = () => {
-    setSearchMode(null)
-    setProfileUrl("")
-    setSellerName("")
-    setSelectedPlatform("")
-    setSelectedLocation("")
-    setMinTrustScore(null)
+    updateSearchState({
+      mode: null,
+      profileUrl: "",
+      sellerName: "",
+      selectedPlatform: "",
+      selectedLocation: "",
+      minTrustScore: null
+    })
   }
 
   const handleViewSellerProfile = async () => {
-    setIsLoadingProfile(true)
+    updateSellerProfileState({ isLoading: true })
     try {
       const response = await sellersAPI.getMySellerProfile()
       
       if (response.success && response.data?.seller) {
-        setSellerProfile(response.data)
-        setShowSellerProfileModal(true)
+        updateSellerProfileState({ 
+          data: response.data,
+          isLoading: false
+        })
+        updateModalState({ showSellerProfile: true })
       } else {
+        updateSellerProfileState({ isLoading: false })
         toast.error(response.message || "Failed to load seller profile")
       }
     } catch (error: any) {
       console.error("Error loading seller profile:", error)
+      updateSellerProfileState({ isLoading: false })
       toast.error(error.response?.data?.message || "Failed to load seller profile. Please try again.")
-    } finally {
-      setIsLoadingProfile(false)
     }
   }
 
   const handleRecalculateScore = async () => {
-    setIsRecalculating(true)
+    updateSellerProfileState({ isRecalculating: true })
     try {
       // First, get the seller profile to obtain the seller ID
       const profileResponse = await sellersAPI.getMySellerProfile()
       
       if (!profileResponse.success || !profileResponse.data?.seller?._id) {
+        updateSellerProfileState({ isRecalculating: false })
         toast.error("Failed to get seller ID. Please try again.")
         return
       }
@@ -210,17 +356,20 @@ export function HeroSection() {
       
       if (response.success && response.data) {
         // Transform the response to match the modal's expected format
-        setSellerProfile(response.data)
-        setShowSellerProfileModal(true)
+        updateSellerProfileState({
+          data: response.data,
+          isRecalculating: false
+        })
+        updateModalState({ showSellerProfile: true })
         toast.success("Score recalculated successfully!")
       } else {
+        updateSellerProfileState({ isRecalculating: false })
         toast.error(response.message || "Failed to recalculate score")
       }
     } catch (error: any) {
       console.error("Error recalculating score:", error)
+      updateSellerProfileState({ isRecalculating: false })
       toast.error(error.response?.data?.message || "Failed to recalculate score. Please try again.")
-    } finally {
-      setIsRecalculating(false)
     }
   }
 
@@ -263,10 +412,12 @@ export function HeroSection() {
           <div className="flex items-center justify-center gap-4 flex-wrap">
             <Button
               onClick={() => {
-                setSearchMode("profile-url")
-                setSellerName("")
-                setSelectedPlatform("")
-                setSelectedLocation("")
+                updateSearchState({
+                  mode: "profile-url",
+                  sellerName: "",
+                  selectedPlatform: "",
+                  selectedLocation: ""
+                })
               }}
               variant={searchMode === "profile-url" ? "primary" : "secondary"}
               size="xl"
@@ -281,9 +432,11 @@ export function HeroSection() {
             </Button>
             <Button
               onClick={() => {
-                setSearchMode("name-platform")
-                setProfileUrl("")
-                setSelectedLocation("")
+                updateSearchState({
+                  mode: "name-platform",
+                  profileUrl: "",
+                  selectedLocation: ""
+                })
               }}
               variant={searchMode === "name-platform" ? "primary" : "secondary"}
               size="xl"
@@ -297,7 +450,7 @@ export function HeroSection() {
               <span>Search by Name and Platform</span>
             </Button>
             <Button
-              onClick={() => setSearchMode("name-platform-location")}
+              onClick={() => updateSearchState({ mode: "name-platform-location" })}
               variant={searchMode === "name-platform-location" ? "primary" : "secondary"}
               size="xl"
               className={`flex items-center gap-2 px-6 py-3 ${
@@ -324,7 +477,7 @@ export function HeroSection() {
                         type="url"
                         placeholder="Enter seller profile URL (e.g., https://jiji.ng/shop/...)"
                         value={profileUrl}
-                        onChange={(e) => setProfileUrl(e.target.value)}
+                        onChange={(e) => updateSearchState({ profileUrl: e.target.value })}
                         onKeyPress={(e) => e.key === 'Enter' && handleSearch()}
                         className="pl-12 pr-4 py-6 bg-gray-900 border-gray-700 text-white placeholder:text-gray-400 focus:border-purple-500 focus:ring-purple-500"
                       />
@@ -358,13 +511,13 @@ export function HeroSection() {
                         type="text"
                         placeholder="Enter seller name or store name"
                         value={sellerName}
-                        onChange={(e) => setSellerName(e.target.value)}
+                        onChange={(e) => updateSearchState({ sellerName: e.target.value })}
                         onKeyPress={(e) => e.key === 'Enter' && handleSearch()}
                         className="pl-12 pr-4 py-6 bg-gray-900 border-gray-700 text-white placeholder:text-gray-400 focus:border-purple-500 focus:ring-purple-500"
                       />
                     </div>
                     <div className="w-64">
-                      <Select value={selectedPlatform} onValueChange={setSelectedPlatform}>
+                      <Select value={selectedPlatform} onValueChange={(value) => updateSearchState({ selectedPlatform: value })}>
                         <SelectTrigger className="w-full py-6 bg-gray-900 border-gray-700 text-white focus:border-purple-500 focus:ring-purple-500 hover:border-gray-600">
                           <div className="flex items-center gap-2 w-full">
                             <Laptop className="w-4 h-4 text-gray-400 flex-shrink-0" />
@@ -413,13 +566,13 @@ export function HeroSection() {
                         type="text"
                         placeholder="Enter seller name or store name"
                         value={sellerName}
-                        onChange={(e) => setSellerName(e.target.value)}
+                        onChange={(e) => updateSearchState({ sellerName: e.target.value })}
                         onKeyPress={(e) => e.key === 'Enter' && handleSearch()}
                         className="pl-12 pr-4 py-6 bg-gray-900 border-gray-700 text-white placeholder:text-gray-400 focus:border-purple-500 focus:ring-purple-500"
                       />
                     </div>
                     <div className="w-56">
-                      <Select value={selectedPlatform} onValueChange={setSelectedPlatform}>
+                      <Select value={selectedPlatform} onValueChange={(value) => updateSearchState({ selectedPlatform: value })}>
                         <SelectTrigger className="w-full py-6 bg-gray-900 border-gray-700 text-white focus:border-purple-500 focus:ring-purple-500 hover:border-gray-600">
                           <div className="flex items-center gap-2 w-full">
                             <Laptop className="w-4 h-4 text-gray-400 flex-shrink-0" />
@@ -445,7 +598,7 @@ export function HeroSection() {
                         type="text"
                         placeholder="Enter location (e.g., Lagos, Nigeria)"
                         value={selectedLocation}
-                        onChange={(e) => setSelectedLocation(e.target.value)}
+                        onChange={(e) => updateSearchState({ selectedLocation: e.target.value })}
                         onKeyPress={(e) => e.key === 'Enter' && handleSearch()}
                         className="pl-12 pr-4 py-6 bg-gray-900 border-gray-700 text-white placeholder:text-gray-400 focus:border-purple-500 focus:ring-purple-500"
                       />
@@ -484,8 +637,10 @@ export function HeroSection() {
                     <span className="text-sm text-white max-w-xs truncate">{profileUrl}</span>
                     <button
                       onClick={() => {
-                        setProfileUrl("")
-                        setSearchMode(null)
+                        updateSearchState({
+                          profileUrl: "",
+                          mode: null
+                        })
                       }}
                       className="ml-1 hover:bg-gray-700 rounded-full p-0.5"
                     >
@@ -585,16 +740,38 @@ export function HeroSection() {
           )}
         </div>
         
-        {/* Seller Result Modal */}
+        {/* Seller Results - Inline Display */}
         {searchResult && (
-          <SellerResultModal
-            data={searchResult}
-            isOpen={showModal}
-            onClose={() => {
-              setShowModal(false)
-              setSearchResult(null)
+          <div 
+            ref={resultsRef}
+            id="seller-results"
+            className="mt-12 mb-8 bg-white border-2 border-blue-300 rounded-3xl shadow-2xl p-8 relative z-10 transform transition-all duration-500 ease-out hover:shadow-[0_20px_50px_-12px_rgba(0,0,0,0.25)]"
+            style={{ 
+              boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04), 0 0 0 1px rgba(59, 130, 246, 0.1)',
+              animation: 'fadeInUp 0.6s ease-out'
             }}
-          />
+          >
+            <div className="flex items-start space-x-4 mb-6">
+              <div className="w-12 h-12 bg-green-500 rounded-lg flex items-center justify-center flex-shrink-0 shadow-lg">
+                <Search className="w-6 h-6 text-white" />
+              </div>
+              <div className="flex-1">
+                <h2 className="text-2xl font-bold text-gray-900 mb-2">Seller Analysis Results</h2>
+                <p className="text-gray-600">Detailed analysis of the seller profile</p>
+              </div>
+              <button
+                onClick={() => updateSearchState({ result: null })}
+                className="w-8 h-8 rounded-full bg-gray-100 hover:bg-gray-200 flex items-center justify-center transition-colors"
+                aria-label="Close results"
+              >
+                <X className="w-5 h-5 text-gray-600" />
+              </button>
+            </div>
+
+            <div className="relative">
+              <SellerProfileDisplay data={searchResult} isLoggedIn={isLoggedIn} />
+            </div>
+          </div>
         )}
       </div>
     )
@@ -709,8 +886,8 @@ export function HeroSection() {
             data={sellerProfile}
             isOpen={showSellerProfileModal}
             onClose={() => {
-              setShowSellerProfileModal(false)
-              setSellerProfile(null)
+              updateModalState({ showSellerProfile: false })
+              updateSellerProfileState({ data: null })
             }}
           />
         )}
@@ -971,3 +1148,4 @@ export function HeroSection() {
     </div>
   )
 }
+

@@ -87,6 +87,7 @@ export function UserSettingsModal({ open, onClose, user, updateUser, logout }: U
     onClose()
   }
 
+  // Data loading functions - memoized to prevent unnecessary re-renders
   const loadProfile = useCallback(async () => {
     setProfileState((prev) => ({ ...prev, loading: true, error: null }))
     try {
@@ -102,137 +103,156 @@ export function UserSettingsModal({ open, onClose, user, updateUser, logout }: U
     }
   }, [])
 
-  useEffect(() => {
-    if (!open) return
-    if (activeTab === "my-profile" && profileData === null && !loadingProfile) {
-      loadProfile()
-    }
-  }, [open, activeTab, profileData, loadingProfile, loadProfile])
+  const loadFeedbacks = useCallback(async () => {
+    setFeedbackState((prev) => ({ ...prev, loading: true, error: null }))
+    try {
+      if (user?.role === "seller") {
+        try {
+          const sellerProfileRes = await sellersAPI.getMySellerProfile()
+          const sellerId = sellerProfileRes?.data?._id || sellerProfileRes?.data?.seller?._id || sellerProfileRes?._id
 
-  useEffect(() => {
-    if (!open) return
-    if (activeTab === "update-profile" && user?.role === "seller") {
-      if (profileData && !sellerProfileName && !sellerLocation && !sellerBio) {
-        setSellerForm((prev) => ({
-          ...prev,
-          profileName: profileData.name || "",
-          location: profileData.location || "",
-          bio: profileData.bio || "",
-        }))
-      }
-    }
-  }, [open, activeTab, user, profileData, sellerProfileName, sellerLocation, sellerBio])
-
-  useEffect(() => {
-    if (!open) return
-
-    const loadFeedbacks = async () => {
-      setFeedbackState((prev) => ({ ...prev, loading: true, error: null }))
-      try {
-        if (user?.role === "seller") {
-          try {
-            const sellerProfileRes = await sellersAPI.getMySellerProfile()
-            const sellerId = sellerProfileRes?.data?._id || sellerProfileRes?.data?.seller?._id || sellerProfileRes?._id
-
-            if (!sellerId) {
-              throw new Error("Seller profile not found. Please claim your seller profile first.")
-            }
-
-            const res = await sellersAPI.getSellerFeedback(sellerId)
-            const flags = res?.data?.flags || []
-            const endorsements = res?.data?.endorsements || []
-
-            const combined = [
-              ...flags.map((flag: any) => ({ ...flag, _type: "flag" })),
-              ...endorsements.map((endorsement: any) => ({ ...endorsement, _type: "endorsement" })),
-            ]
-
-            setFeedbackState({ data: combined, loading: false, error: null })
-            return
-          } catch (sellerErr: any) {
-            const sellerMsg =
-              sellerErr?.response?.data?.message ||
-              sellerErr?.message ||
-              "Failed to load seller profile. Please make sure you have claimed your seller profile."
-            setFeedbackState({ data: [], loading: false, error: sellerMsg })
-            return
+          if (!sellerId) {
+            throw new Error("Seller profile not found. Please claim your seller profile first.")
           }
+
+          const res = await sellersAPI.getSellerFeedback(sellerId)
+          const flags = res?.data?.flags || []
+          const endorsements = res?.data?.endorsements || []
+
+          const combined = [
+            ...flags.map((flag: any) => ({ ...flag, _type: "flag" })),
+            ...endorsements.map((endorsement: any) => ({ ...endorsement, _type: "endorsement" })),
+          ]
+
+          setFeedbackState({ data: combined, loading: false, error: null })
+          return
+        } catch (sellerErr: any) {
+          const sellerMsg =
+            sellerErr?.response?.data?.message ||
+            sellerErr?.message ||
+            "Failed to load seller profile. Please make sure you have claimed your seller profile."
+          setFeedbackState({ data: [], loading: false, error: sellerMsg })
+          return
         }
-
-        const res = await usersAPI.getMyFeedback()
-        const list = res?.data?.feedbackHistory || res?.data || []
-        setFeedbackState({
-          data: Array.isArray(list) ? list : [],
-          loading: false,
-          error: null,
-        })
-      } catch (err: any) {
-        const msg = err?.response?.data?.message || "Failed to load feedback."
-        setFeedbackState({ data: [], loading: false, error: msg })
       }
-    }
 
-    if (activeTab === "my-feedbacks" && feedbacks === null && !loadingFeedbacks) {
-      loadFeedbacks()
+      const res = await usersAPI.getMyFeedback()
+      const list = res?.data?.feedbackHistory || res?.data || []
+      setFeedbackState({
+        data: Array.isArray(list) ? list : [],
+        loading: false,
+        error: null,
+      })
+    } catch (err: any) {
+      const msg = err?.response?.data?.message || "Failed to load feedback."
+      setFeedbackState({ data: [], loading: false, error: msg })
     }
-  }, [open, activeTab, user, feedbacks, loadingFeedbacks])
+  }, [user?.role])
 
+  const loadInteractions = useCallback(async () => {
+    setInteractionsState((prev) => ({ ...prev, loading: true, error: null }))
+    try {
+      const res = await usersAPI.getMyInteractions()
+      const flagged = res?.data?.interactions?.flagged || []
+      const endorsed = res?.data?.interactions?.endorsed || []
+      setInteractionsState({
+        data: { flagged, endorsed },
+        loading: false,
+        error: null,
+      })
+    } catch (err: any) {
+      const msg = err?.response?.data?.message || "Failed to load interactions."
+      setInteractionsState({
+        data: { flagged: [], endorsed: [] },
+        loading: false,
+        error: msg,
+      })
+    }
+  }, [])
+
+  const loadAnalytics = useCallback(async () => {
+    setAnalyticsState((prev) => ({ ...prev, loading: true, error: null }))
+    try {
+      const sellerId = "68fb8d9ad8299bdd94be605d"
+      const res = await sellersAPI.getSellerAnalytics(sellerId)
+      setAnalyticsState({
+        data: res?.data || res,
+        loading: false,
+        error: null,
+      })
+    } catch (err: any) {
+      const msg = err?.response?.data?.message || "Failed to load analytics."
+      setAnalyticsState({
+        data: null,
+        loading: false,
+        error: msg,
+      })
+    }
+  }, [])
+
+  // Consolidated effect for tab-based data loading
   useEffect(() => {
     if (!open) return
 
-    const loadInteractions = async () => {
-      setInteractionsState((prev) => ({ ...prev, loading: true, error: null }))
-      try {
-        const res = await usersAPI.getMyInteractions()
-        const flagged = res?.data?.interactions?.flagged || []
-        const endorsed = res?.data?.interactions?.endorsed || []
-        setInteractionsState({
-          data: { flagged, endorsed },
-          loading: false,
-          error: null,
-        })
-      } catch (err: any) {
-        const msg = err?.response?.data?.message || "Failed to load interactions."
-        setInteractionsState({
-          data: { flagged: [], endorsed: [] },
-          loading: false,
-          error: msg,
-        })
-      }
-    }
+    switch (activeTab) {
+      case "my-profile":
+        if (profileData === null && !loadingProfile) {
+          loadProfile()
+        }
+        break
 
-    if (activeTab === "my-interactions" && interactions === null && !loadingInteractions && user?.role !== "seller") {
-      loadInteractions()
-    }
-  }, [open, activeTab, user, interactions, loadingInteractions])
+      case "update-profile":
+        // Pre-fill seller form if needed
+        if (user?.role === "seller" && profileData && !sellerProfileName && !sellerLocation && !sellerBio) {
+          setSellerForm({
+            profileName: profileData.name || "",
+            location: profileData.location || "",
+            bio: profileData.bio || "",
+          })
+        }
+        break
 
-  useEffect(() => {
-    if (!open) return
+      case "my-feedbacks":
+        if (feedbacks === null && !loadingFeedbacks) {
+          loadFeedbacks()
+        }
+        break
 
-    const loadAnalytics = async () => {
-      setAnalyticsState((prev) => ({ ...prev, loading: true, error: null }))
-      try {
-        const sellerId = "68fb8d9ad8299bdd94be605d"
-        const res = await sellersAPI.getSellerAnalytics(sellerId)
-        setAnalyticsState({
-          data: res?.data || res,
-          loading: false,
-          error: null,
-        })
-      } catch (err: any) {
-        const msg = err?.response?.data?.message || "Failed to load analytics."
-        setAnalyticsState({
-          data: null,
-          loading: false,
-          error: msg,
-        })
-      }
-    }
+      case "my-interactions":
+        if (user?.role !== "seller" && interactions === null && !loadingInteractions) {
+          loadInteractions()
+        }
+        break
 
-    if (activeTab === "my-analytics" && analytics === null && !loadingAnalytics && user?.role === "seller") {
-      loadAnalytics()
+      case "my-analytics":
+        if (user?.role === "seller" && analytics === null && !loadingAnalytics) {
+          loadAnalytics()
+        }
+        break
+
+      default:
+        break
     }
-  }, [open, activeTab, user, analytics, loadingAnalytics])
+  }, [
+    open,
+    activeTab,
+    user?.role,
+    profileData,
+    loadingProfile,
+    sellerProfileName,
+    sellerLocation,
+    sellerBio,
+    feedbacks,
+    loadingFeedbacks,
+    interactions,
+    loadingInteractions,
+    analytics,
+    loadingAnalytics,
+    loadProfile,
+    loadFeedbacks,
+    loadInteractions,
+    loadAnalytics,
+  ])
 
   if (!open) {
     return null

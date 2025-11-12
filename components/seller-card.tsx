@@ -120,16 +120,6 @@ export function SellerCard({ seller, onViewProfile }: SellerCardProps) {
     }
   }
 
-  const getConfidenceColor = (level: string) => {
-    switch (level) {
-      case "high": return "text-green-600 bg-green-100"
-      case "medium": return "text-yellow-600 bg-yellow-100"
-      case "low": return "text-red-600 bg-red-100"
-      default: return "text-gray-600 bg-gray-100"
-    }
-  }
-
-  console.log(seller.listingHistory, "+++++++")
   return (
     <div className="bg-white border border-gray-200 rounded-xl p-6 hover:shadow-lg transition-shadow duration-200">
       {/* Header */}

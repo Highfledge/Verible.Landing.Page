@@ -501,7 +501,7 @@ export function QuickActions() {
       onClick: () => router.push("/risk-alerts")
     },
     {
-      label: "Verify Business",
+      label: "For Businesses",
       icon: Building2,
       color: "bg-green-500 hover:bg-green-600",
       onClick: () => router.push("/seller-onboarding")

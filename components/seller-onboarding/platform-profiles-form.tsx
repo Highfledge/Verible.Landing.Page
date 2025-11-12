@@ -2,7 +2,7 @@
 
 import { useState } from "react"
 import { Button } from "@/components/ui/button"
-import { Globe, ShoppingCart, Tag, Martini, Square, FileText, Smartphone, CheckCircle2 } from "lucide-react"
+import { Globe, ShoppingCart, Tag, Martini, Square, FileText, Smartphone, CheckCircle2, Store, Building, Building2 } from "lucide-react"
 import { cn } from "@/lib/utils"
 
 interface PlatformProfilesFormProps {
@@ -12,11 +12,18 @@ interface PlatformProfilesFormProps {
 
 const platforms = [
   {
-    id: "amazon",
-    name: "Amazon",
-    icon: ShoppingCart,
-    color: "bg-orange-100 hover:bg-orange-200 border-orange-300",
-    iconColor: "text-orange-600",
+    id: "facebook",
+    name: "Facebook Marketplace",
+    icon: Square,
+    color: "bg-blue-100 hover:bg-blue-200 border-blue-300",
+    iconColor: "text-blue-600",
+  },
+  {
+    id: "jiji",
+    name: "Jiji",
+    icon: Globe,
+    color: "bg-yellow-100 hover:bg-yellow-200 border-yellow-300",
+    iconColor: "text-yellow-600",
   },
   {
     id: "ebay",
@@ -33,11 +40,32 @@ const platforms = [
     iconColor: "text-pink-600",
   },
   {
-    id: "facebook",
-    name: "Facebook Marketplace",
-    icon: Square,
-    color: "bg-blue-100 hover:bg-blue-200 border-blue-300",
-    iconColor: "text-blue-600",
+    id: "jumia",
+    name: "Jumia",
+    icon: Store,
+    color: "bg-orange-100 hover:bg-orange-200 border-orange-300",
+    iconColor: "text-orange-600",
+  },
+  {
+    id: "kijiji",
+    name: "Kijiji",
+    icon: Building,
+    color: "bg-red-100 hover:bg-red-200 border-red-300",
+    iconColor: "text-red-600",
+  },
+  {
+    id: "konga",
+    name: "Konga",
+    icon: Building2,
+    color: "bg-green-100 hover:bg-green-200 border-green-300",
+    iconColor: "text-green-600",
+  },
+  {
+    id: "amazon",
+    name: "Amazon",
+    icon: ShoppingCart,
+    color: "bg-orange-100 hover:bg-orange-200 border-orange-300",
+    iconColor: "text-orange-600",
   },
   {
     id: "craigslist",

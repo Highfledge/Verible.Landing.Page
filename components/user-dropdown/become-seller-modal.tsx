@@ -80,8 +80,13 @@ export function BecomeSellerModal({ open, onClose }: BecomeSellerModalProps) {
               onChange={(e) => handleChange("platform", e.target.value)}
               className="w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
             >
+              <option value="facebook">Facebook Marketplace (LIVE)</option>
               <option value="jiji">Jiji (LIVE)</option>
-              <option value="facebook">Facebook</option>
+              <option value="ebay">eBay (LIVE)</option>
+              <option value="etsy">Etsy (LIVE)</option>
+              <option value="jumia">Jumia (LIVE)</option>
+              <option value="kijiji">Kijiji (LIVE)</option>
+              <option value="konga">Konga (LIVE)</option>
             </select>
           </div>
 

@@ -36,6 +36,8 @@ interface Seller {
   lastScored: string
   verificationStatus: "verified" | "unverified" | "id-verified"
   listingHistory: any[]
+  flags?: any[]
+  endorsements?: any[]
   isActive: boolean
   isClaimed: boolean
   claimedAt?: string
@@ -53,12 +55,19 @@ interface Seller {
 
 type FilterType = "top" | "all"
 
+const SELLERS_PER_PAGE = 10
+const INITIAL_FETCH_LIMIT = 100 // Fetch 100 sellers at once
+
 export function SellersSection() {
   const { isLoggedIn, user } = useAuth()
   const [filter, setFilter] = useState<FilterType>("top")
-  const [searchQuery, setSearchQuery] = useState("")
-  const [sellers, setSellers] = useState<Seller[]>([])
+  const [searchInput, setSearchInput] = useState("") // Input field value
+  const [searchQuery, setSearchQuery] = useState("") // Actual search query used for API
+  const [allSellers, setAllSellers] = useState<Seller[]>([]) // All fetched sellers
+  const [displayedSellers, setDisplayedSellers] = useState<Seller[]>([]) // Currently displayed sellers
+  const [displayCount, setDisplayCount] = useState(SELLERS_PER_PAGE) // Number of sellers to display
   const [isLoading, setIsLoading] = useState(false)
+  const [hasMore, setHasMore] = useState(false)
   const [dropdownOpen, setDropdownOpen] = useState(false)
   const dropdownRef = useRef<HTMLDivElement>(null)
   const [selectedSellerData, setSelectedSellerData] = useState<any | null>(null)
@@ -84,25 +93,54 @@ export function SellersSection() {
     return () => document.removeEventListener("mousedown", handleClickOutside)
   }, [])
 
-  // Load sellers when filter changes
+  // Load sellers when filter or search changes
   useEffect(() => {
-    loadSellers()
-  }, [filter])
+    // Reset pagination when filter or search changes
+    const loadInitialSellers = async () => {
+      setDisplayCount(SELLERS_PER_PAGE)
+      setAllSellers([])
+      setDisplayedSellers([])
+      await loadAllSellers()
+    }
+    loadInitialSellers()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [filter, searchQuery])
 
-  const loadSellers = async () => {
+  // Update displayed sellers when allSellers or displayCount changes
+  useEffect(() => {
+    const displayed = allSellers.slice(0, displayCount)
+    setDisplayedSellers(displayed)
+    
+    // Check if there are more sellers to display
+    setHasMore(displayCount < allSellers.length)
+  }, [allSellers, displayCount])
+
+  // Helper function to deduplicate sellers by _id
+  const deduplicateSellers = (sellers: Seller[]): Seller[] => {
+    const seen = new Set<string>()
+    return sellers.filter((seller) => {
+      if (seen.has(seller._id)) {
+        return false
+      }
+      seen.add(seller._id)
+      return true
+    })
+  }
+
+  const loadAllSellers = async () => {
     setIsLoading(true)
     try {
       let response
       if (filter === "top") {
         response = await sellersAPI.getTopSellers({
           search: searchQuery || undefined,
-          limit: 20,
+          limit: INITIAL_FETCH_LIMIT,
           offset: 0
         })
       } else {
         response = await sellersAPI.getAllSellers({
           search: searchQuery || undefined,
-          limit: 20,
+          limit: INITIAL_FETCH_LIMIT,
           offset: 0
         })
       }
@@ -111,23 +149,33 @@ export function SellersSection() {
       if (response.success && response.data && response.data.sellers) {
         // Clean the seller data to remove escaped backslashes
         const cleanedSellers = cleanObjectData(response.data.sellers)
-        setSellers(cleanedSellers)
+        
+        // Deduplicate sellers to prevent duplicate keys
+        const uniqueSellers = deduplicateSellers(cleanedSellers)
+        
+        setAllSellers(uniqueSellers)
       } else {
         console.error("Invalid API response structure:", response)
         toast.error("Invalid response from server")
-        setSellers([])
+        setAllSellers([])
       }
     } catch (error: any) {
       console.error("Error loading sellers:", error)
       toast.error(error.response?.data?.message || error.message || "Failed to load sellers. Please try again.")
-      setSellers([])
+      setAllSellers([])
     } finally {
       setIsLoading(false)
     }
   }
 
   const handleSearch = () => {
-    loadSellers()
+    // Update searchQuery which triggers the useEffect to reload sellers
+    setSearchQuery(searchInput.trim())
+  }
+
+  const handleLoadMore = () => {
+    // Simply increase the display count (client-side pagination)
+    setDisplayCount((prev) => prev + SELLERS_PER_PAGE)
   }
 
   const handleFilterChange = (newFilter: FilterType) => {
@@ -140,8 +188,55 @@ export function SellersSection() {
     try {
       const response = await sellersAPI.getSellerById(seller._id)
       
-      if (response.success && response.data?.seller) {
-        setSelectedSellerData(response.data)
+      // Handle response structure: API returns { success, message, data: { profileData, marketplaceData, ... } }
+      // getSellerById returns response.data from axios, which contains { success, message, data }
+      // So we need to access response.data.data to get the actual data object
+      const apiData = response?.data?.data || response?.data || response
+      
+      if (response?.success && apiData) {
+        // Clean the data first - apiData contains { profileData, marketplaceData, recentListings, scoringResult }
+        const cleanedData = cleanObjectData(apiData)
+        
+        // Normalize the data structure to match SellerProfileDisplay expectations
+        // The API returns: { profileData, marketplaceData, recentListings, scoringResult }
+        // But SellerProfileDisplay expects: { seller: {...}, extractedData: {...}, scoringResult: {...} }
+        const normalized = cleanedData?.seller
+          ? cleanedData // Already in the correct format
+          : {
+              seller: {
+                profileData: cleanedData?.profileData || {},
+                marketplaceData: cleanedData?.marketplaceData || {},
+                pulseScore: cleanedData?.scoringResult?.pulseScore ?? seller.pulseScore ?? 0,
+                confidenceLevel: cleanedData?.scoringResult?.confidenceLevel || seller.confidenceLevel || 'low',
+                verificationStatus: cleanedData?.verificationStatus || cleanedData?.marketplaceData?.verificationStatus || seller.verificationStatus || 'unverified',
+                lastSeen: cleanedData?.marketplaceData?.lastSeen || seller.lastSeen || '',
+                recentListings: cleanedData?.recentListings || [],
+                listingHistory: cleanedData?.listingHistory || seller.listingHistory || [],
+                flags: cleanedData?.flags || seller.flags || [],
+                endorsements: cleanedData?.endorsements || seller.endorsements || [],
+                scoringFactors: cleanedData?.scoringResult?.scoringFactors || {},
+                isActive: cleanedData?.isActive ?? seller.isActive ?? true,
+                isClaimed: cleanedData?.isClaimed ?? seller.isClaimed ?? false,
+                firstSeen: cleanedData?.firstSeen || seller.firstSeen,
+                lastScored: cleanedData?.lastScored || seller.lastScored,
+                createdAt: cleanedData?.createdAt || seller.createdAt,
+                updatedAt: cleanedData?.updatedAt || seller.updatedAt,
+                profileUrl: cleanedData?.profileUrl || seller.profileUrl,
+                platform: cleanedData?.platform || cleanedData?.marketplaceData?.platform || seller.platform,
+              },
+              extractedData: {
+                platform: cleanedData?.marketplaceData?.platform || cleanedData?.platform || seller.platform || 'unknown',
+                profileUrl: cleanedData?.profileUrl || seller.profileUrl || '',
+                profileData: cleanedData?.profileData || {},
+                marketplaceData: cleanedData?.marketplaceData || {},
+                recentListings: cleanedData?.recentListings || [],
+                trustIndicators: cleanedData?.scoringResult?.trustIndicators || cleanedData?.trustIndicators || {},
+              },
+              scoringResult: cleanedData?.scoringResult || {},
+            }
+        
+        console.log("Normalized seller data:", normalized)
+        setSelectedSellerData(normalized)
         setShowSellerModal(true)
       } else {
         toast.error(response.message || "Failed to load seller details")
@@ -181,8 +276,8 @@ export function SellersSection() {
               <Input
                 type="text"
                 placeholder="Search sellers..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
+                value={searchInput}
+                onChange={(e) => setSearchInput(e.target.value)}
                 onKeyPress={(e) => e.key === 'Enter' && handleSearch()}
                 className="pl-10 pr-4"
               />
@@ -233,9 +328,9 @@ export function SellersSection() {
         )}
 
         {/* Sellers Grid */}
-        {!isLoading && sellers.length > 0 && (
+        {!isLoading && displayedSellers.length > 0 && (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-            {sellers.map((seller) => (
+            {displayedSellers.map((seller) => (
               <SellerCard
                 key={seller._id}
                 seller={seller}
@@ -246,7 +341,7 @@ export function SellersSection() {
         )}
 
         {/* Empty State */}
-        {!isLoading && sellers.length === 0 && (
+        {!isLoading && displayedSellers.length === 0 && allSellers.length === 0 && (
           <div className="text-center py-12">
             <Users className="w-16 h-16 text-gray-400 mx-auto mb-4" />
             <h3 className="text-lg font-semibold text-gray-900 mb-2">No sellers found</h3>
@@ -257,8 +352,8 @@ export function SellersSection() {
               <Button
                 variant="outline"
                 onClick={() => {
+                  setSearchInput("")
                   setSearchQuery("")
-                  loadSellers()
                 }}
               >
                 Clear search
@@ -267,10 +362,14 @@ export function SellersSection() {
           </div>
         )}
 
-        {/* Load More Button (if needed) */}
-        {!isLoading && sellers.length > 0 && (
+        {/* Load More Button */}
+        {!isLoading && displayedSellers.length > 0 && hasMore && (
           <div className="text-center mt-8">
-            <Button variant="outline" size="lg">
+            <Button 
+              variant="outline" 
+              size="lg"
+              onClick={handleLoadMore}
+            >
               Load More Sellers
             </Button>
           </div>

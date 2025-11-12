@@ -26,7 +26,7 @@ export function StickyBottomBar() {
                 alt="Verible Logo"
                 width={44}
                 height={44}
-                className="w-11 h-11"
+                className="w-11 h-11 rounded-lg"
               />
               <span className="text-sm font-medium text-white">Verible</span>
             </div>
@@ -99,7 +99,7 @@ export function StickyBottomBar() {
                 alt="Verible Logo"
                 width={44}
                 height={44}
-                className="w-11 h-11"
+                className="w-11 h-11 rounded-lg"
               />
               <span className="text-sm font-medium text-white">Verible</span>
             </div>

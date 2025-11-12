@@ -18,9 +18,12 @@ const platforms = [
   { value: "all", label: "All Platforms", status: "" },
   { value: "facebook", label: "Facebook Marketplace", status: "LIVE", live: true },
   { value: "jiji", label: "Jiji", status: "LIVE", live: true },
-  { value: "ebay", label: "eBay", status: "Coming Soon" },
+  { value: "ebay", label: "eBay", status: "LIVE", live: true },
+  { value: "etsy", label: "Etsy", status: "LIVE", live: true },
+  { value: "jumia", label: "Jumia", status: "LIVE", live: true },
+  { value: "kijiji", label: "Kijiji", status: "LIVE", live: true },
+  { value: "konga", label: "Konga", status: "LIVE", live: true },
   { value: "amazon", label: "Amazon", status: "Planned" },
-  { value: "etsy", label: "Etsy", status: "Planned" },
   { value: "aliexpress", label: "AliExpress", status: "Planned" },
   { value: "instagram", label: "Instagram Shopping", status: "Planned" },
   { value: "tiktok", label: "TikTok Shops", status: "Planned" },
@@ -53,6 +56,7 @@ export function BuyerToolsPage() {
   const [sellerData, setSellerData] = useState<any>(null)
   const platformRef = useRef<HTMLDivElement>(null)
   const languageRef = useRef<HTMLDivElement>(null)
+  const resultsRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -67,6 +71,28 @@ export function BuyerToolsPage() {
     document.addEventListener("mousedown", handleClickOutside)
     return () => document.removeEventListener("mousedown", handleClickOutside)
   }, [])
+
+  // Auto-scroll to results when sellerData becomes available
+  useEffect(() => {
+    if (sellerData && resultsRef.current) {
+      // Small delay to ensure the DOM is updated and rendered
+      const scrollTimer = setTimeout(() => {
+        const element = resultsRef.current
+        if (element) {
+          const offset = 80 // Offset for fixed header/navigation
+          const elementPosition = element.getBoundingClientRect().top
+          const offsetPosition = elementPosition + window.pageYOffset - offset
+
+          window.scrollTo({
+            top: offsetPosition,
+            behavior: 'smooth'
+          })
+        }
+      }, 400) // Wait for animation to complete
+
+      return () => clearTimeout(scrollTimer)
+    }
+  }, [sellerData])
 
   const selectedPlatformData = platforms.find(p => p.value === selectedPlatform)
   const selectedLanguageData = languages.find(l => l.code === selectedLanguage)
@@ -209,12 +235,12 @@ export function BuyerToolsPage() {
               </div>
               <div className="flex-1">
                 <div className="flex items-center space-x-3 mb-2">
-                  <h2 className="text-2xl font-bold text-gray-900">MVP: Facebook Marketplace Focus</h2>
+                  <h2 className="text-2xl font-bold text-gray-900">MVP: Jiji Marketplace Focus</h2>
                   <Badge variant="success" className="text-sm px-3 py-1">LIVE NOW</Badge>
                   <span className="text-gray-600">• Single Platform Strategy</span>
                 </div>
                 <p className="text-gray-700 mb-6 leading-relaxed">
-                  We're starting with Facebook Marketplace to perfect our trust scoring algorithm. This focused approach ensures reliable, accurate results before expanding to other platforms.
+                  We're starting with Jiji Marketplace to perfect our trust scoring algorithm. This focused approach ensures reliable, accurate results before expanding to other platforms.
                 </p>
                 <div className="flex justify-end">
                   <Button variant="outline" className="border-green-500 text-green-600 hover:bg-green-50">
@@ -244,10 +270,10 @@ export function BuyerToolsPage() {
                   <label className="block text-sm font-medium text-gray-700 mb-2">Seller Profile URL</label>
                   <Input
                     type="url"
-                    placeholder="https://www.facebook.com/marketplace/profile/..."
+                    placeholder="https://www.jiji.com/marketplace/profile/..."
                     value={sellerUrl}
                     onChange={(e) => setSellerUrl(e.target.value)}
-                    className="w-full"
+                    className="w-full h-10"
                   />
                 </div>
                 <div className="sm:w-56" ref={platformRef}>
@@ -255,7 +281,7 @@ export function BuyerToolsPage() {
                   <div className="relative">
                     <button
                       onClick={() => setPlatformDropdownOpen(!platformDropdownOpen)}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white text-left flex items-center justify-between"
+                      className="w-full h-10 px-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white text-left flex items-center justify-between"
                     >
                       <span className="text-sm text-gray-700">
                         {selectedPlatformData?.label}
@@ -322,9 +348,9 @@ export function BuyerToolsPage() {
               <div className="bg-gray-50 rounded-lg p-4">
                 <h3 className="text-sm font-medium text-gray-900 mb-3">Search Tips</h3>
                 <ul className="space-y-2 text-sm text-blue-600">
-                  <li>• Paste the complete seller profile URL from Facebook Marketplace</li>
-                  <li>• URL should look like: https://www.facebook.com/marketplace/profile/...</li>
-                  <li>• Facebook Marketplace analysis is currently live and ready</li>
+                  <li>• Paste the complete seller profile URL from Jiji Marketplace</li>
+                  <li>• URL should look like: https://www.jiji.com/marketplace/profile/...</li>
+                  <li>• Jiji Marketplace analysis is currently live and ready</li>
                   {!isLoggedIn && (
                     <li>• <strong>Sign in for detailed seller analysis and profile extraction</strong></li>
                   )}
@@ -335,9 +361,17 @@ export function BuyerToolsPage() {
 
           {/* Seller Results */}
           {sellerData && (
-            <div className="mb-8">
+            <div 
+              ref={resultsRef}
+              id="seller-results"
+              className="mb-8 mt-8 bg-white border-2 border-blue-300 rounded-3xl shadow-2xl p-8 relative z-10 transform transition-all duration-500 ease-out hover:shadow-[0_20px_50px_-12px_rgba(0,0,0,0.25)]"
+              style={{ 
+                boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04), 0 0 0 1px rgba(59, 130, 246, 0.1)',
+                animation: 'fadeInUp 0.6s ease-out'
+              }}
+            >
               <div className="flex items-start space-x-4 mb-6">
-                <div className="w-12 h-12 bg-green-500 rounded-lg flex items-center justify-center flex-shrink-0">
+                <div className="w-12 h-12 bg-green-500 rounded-lg flex items-center justify-center flex-shrink-0 shadow-lg">
                   <Search className="w-6 h-6 text-white" />
                 </div>
                 <div className="flex-1">
@@ -346,7 +380,9 @@ export function BuyerToolsPage() {
                 </div>
               </div>
 
-              <SellerProfileDisplay data={sellerData} isLoggedIn={isLoggedIn} />
+              <div className="relative">
+                <SellerProfileDisplay data={sellerData} isLoggedIn={isLoggedIn} />
+              </div>
             </div>
           )}
 

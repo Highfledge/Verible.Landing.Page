@@ -144,7 +144,7 @@ export const sellersAPI = {
 
   // Get seller score by URL (for non-logged in users) - uses extract-profile endpoint
   scoreByUrl: async (data: { profileUrl: string }) => {
-    const response = await apiClient.post('/api/sellers/extract-profile', data)
+    const response = await apiClient.post('/api/sellers/score-by-url', data)
     return response.data
   },
 
