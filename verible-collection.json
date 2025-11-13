@@ -1,9 +1,10 @@
 {
 	"info": {
-		"_postman_id": "6748d0e2-cd44-4171-b118-5673f699e9db",
+		"_postman_id": "73299fa0-2bc0-4a6a-a8d4-1ca5ff7b9078",
 		"name": "Verible",
 		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
-		"_exporter_id": "13933794"
+		"_exporter_id": "13933794",
+		"_collection_link": "https://martian-escape-489953.postman.co/workspace/329a6de7-018a-47a5-8a5e-6f69d1fd2f47/collection/13933794-73299fa0-2bc0-4a6a-a8d4-1ca5ff7b9078?action=share&source=collection_link&creator=13933794"
 	},
 	"item": [
 		{
@@ -1188,6 +1189,325 @@
 							"body": "{\n    \"success\": true,\n    \"data\": {\n        \"interactions\": {\n            \"flagged\": [],\n            \"endorsed\": []\n        },\n        \"summary\": {\n            \"totalFlags\": 0,\n            \"totalEndorsements\": 0,\n            \"totalInteractions\": 0\n        }\n    }\n}"
 						}
 					]
+				},
+				{
+					"name": "Get user stats",
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					},
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{Token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"profileUrl\": \"https://www.etsy.com/shop/HiBenniDesign?ref=shop-header-name\"\n}"
+						},
+						"url": {
+							"raw": "http://localhost:5002/api/users/my-extractions?timeRange=7d",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "5002",
+							"path": [
+								"api",
+								"users",
+								"my-extractions"
+							],
+							"query": [
+								{
+									"key": "timeRange",
+									"value": "7d"
+								}
+							]
+						}
+					},
+					"response": [
+						{
+							"name": "New Request",
+							"originalRequest": {
+								"method": "GET",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n  \"profileUrl\": \"https://www.etsy.com/shop/HiBenniDesign?ref=shop-header-name\"\n}"
+								},
+								"url": {
+									"raw": "http://localhost:5002/api/users/my-extractions?timeRange=7d",
+									"protocol": "http",
+									"host": [
+										"localhost"
+									],
+									"port": "5002",
+									"path": [
+										"api",
+										"users",
+										"my-extractions"
+									],
+									"query": [
+										{
+											"key": "timeRange",
+											"value": "7d"
+										}
+									]
+								}
+							},
+							"status": "OK",
+							"code": 200,
+							"_postman_previewlanguage": "Text",
+							"header": [
+								{
+									"key": "X-Powered-By",
+									"value": "Express"
+								},
+								{
+									"key": "Access-Control-Allow-Origin",
+									"value": "*"
+								},
+								{
+									"key": "Access-Control-Allow-Credentials",
+									"value": "true"
+								},
+								{
+									"key": "Content-Type",
+									"value": "application/json; charset=utf-8"
+								},
+								{
+									"key": "Content-Length",
+									"value": "1079"
+								},
+								{
+									"key": "ETag",
+									"value": "W/\"437-gQulsiwzqxMJcC9pI5STyW0+hHE\""
+								},
+								{
+									"key": "Date",
+									"value": "Wed, 12 Nov 2025 22:15:51 GMT"
+								},
+								{
+									"key": "Connection",
+									"value": "keep-alive"
+								},
+								{
+									"key": "Keep-Alive",
+									"value": "timeout=5"
+								}
+							],
+							"cookie": [],
+							"body": "{\n    \"success\": true,\n    \"data\": {\n        \"timeRange\": \"7d\",\n        \"sellers\": [\n            {\n                \"id\": \"690f3c9e7d4864608e0b6a98\",\n                \"sellerId\": \"extracted-1762606238091-1\",\n                \"platform\": \"etsy\",\n                \"profileUrl\": \"https://www.etsy.com/shop/HiBenniDesign?ref=shop-header-name\",\n                \"profileData\": {\n                    \"name\": \"HiBenniDesign\",\n                    \"profilePicture\": \"https://i.etsystatic.com/24244048/r/isbl/80d428/78273441/isbl_1680x420.78273441_8tdmvoe4.jpg\",\n                    \"location\": \"Delano, California\",\n                    \"bio\": \"Stickers for your collection Sales 6,698 On Etsy since 2020 Stickers for your collection\"\n                },\n                \"pulseScore\": 67,\n                \"confidenceLevel\": \"High\",\n                \"verificationStatus\": \"unverified\",\n                \"extractedAt\": \"2025-11-12T22:15:45.773Z\",\n                \"createdAt\": \"2025-11-08T12:50:38.110Z\"\n            }\n        ],\n        \"metrics\": {\n            \"totalCount\": 1,\n            \"totalCountChange\": \"+100.0%\",\n            \"totalCountChangeValue\": 100,\n            \"averagePulseScore\": 67,\n            \"averagePulseScoreChange\": \"+67.0\",\n            \"averagePulseScoreChangeValue\": 67,\n            \"highRiskCount\": 0,\n            \"highRiskCountChange\": \"0.0%\",\n            \"highRiskCountChangeValue\": 0\n        },\n        \"period\": {\n            \"current\": {\n                \"start\": \"2025-11-04T23:00:00.000Z\",\n                \"end\": \"2025-11-12T22:15:50.938Z\"\n            },\n            \"previous\": {\n                \"start\": \"2025-10-27T23:00:00.000Z\",\n                \"end\": \"2025-11-04T22:59:59.999Z\"\n            }\n        }\n    }\n}"
+						}
+					]
+				},
+				{
+					"name": "Get Recent Activity",
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					},
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{Token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"profileUrl\": \"https://www.etsy.com/shop/HiBenniDesign?ref=shop-header-name\"\n}"
+						},
+						"url": {
+							"raw": "http://localhost:5002/api/users/recent-activity",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "5002",
+							"path": [
+								"api",
+								"users",
+								"recent-activity"
+							]
+						}
+					},
+					"response": [
+						{
+							"name": "New Request",
+							"originalRequest": {
+								"method": "GET",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n  \"profileUrl\": \"https://www.etsy.com/shop/HiBenniDesign?ref=shop-header-name\"\n}"
+								},
+								"url": {
+									"raw": "http://localhost:5002/api/users/recent-activity",
+									"protocol": "http",
+									"host": [
+										"localhost"
+									],
+									"port": "5002",
+									"path": [
+										"api",
+										"users",
+										"recent-activity"
+									]
+								}
+							},
+							"status": "OK",
+							"code": 200,
+							"_postman_previewlanguage": "Text",
+							"header": [
+								{
+									"key": "X-Powered-By",
+									"value": "Express"
+								},
+								{
+									"key": "Access-Control-Allow-Origin",
+									"value": "*"
+								},
+								{
+									"key": "Access-Control-Allow-Credentials",
+									"value": "true"
+								},
+								{
+									"key": "Content-Type",
+									"value": "application/json; charset=utf-8"
+								},
+								{
+									"key": "Content-Length",
+									"value": "1070"
+								},
+								{
+									"key": "ETag",
+									"value": "W/\"42e-bCCLFdbTnZBQxj5a8qxoYHvvJag\""
+								},
+								{
+									"key": "Date",
+									"value": "Wed, 12 Nov 2025 22:33:21 GMT"
+								},
+								{
+									"key": "Connection",
+									"value": "keep-alive"
+								},
+								{
+									"key": "Keep-Alive",
+									"value": "timeout=5"
+								}
+							],
+							"cookie": [],
+							"body": "{\n    \"success\": true,\n    \"data\": {\n        \"activities\": [\n            {\n                \"type\": \"flag\",\n                \"timestamp\": \"2025-11-12T22:32:44.262Z\",\n                \"details\": {\n                    \"seller\": {\n                        \"id\": \"690f3c9e7d4864608e0b6a98\",\n                        \"name\": \"HiBenniDesign\",\n                        \"platform\": \"etsy\",\n                        \"profileUrl\": \"https://www.etsy.com/shop/HiBenniDesign?ref=shop-header-name\",\n                        \"pulseScore\": 67\n                    },\n                    \"reason\": \"The seller is somehow\",\n                    \"isVerified\": false\n                }\n            },\n            {\n                \"type\": \"endorsement\",\n                \"timestamp\": \"2025-11-12T22:32:16.472Z\",\n                \"details\": {\n                    \"seller\": {\n                        \"id\": \"690f3c9e7d4864608e0b6a98\",\n                        \"name\": \"HiBenniDesign\",\n                        \"platform\": \"etsy\",\n                        \"profileUrl\": \"https://www.etsy.com/shop/HiBenniDesign?ref=shop-header-name\",\n                        \"pulseScore\": 67\n                    },\n                    \"reason\": \"The seller is somehow\",\n                    \"isVerified\": false\n                }\n            },\n            {\n                \"type\": \"extraction\",\n                \"timestamp\": \"2025-11-12T22:30:15.545Z\",\n                \"details\": {\n                    \"seller\": {\n                        \"id\": \"690f3c9e7d4864608e0b6a98\",\n                        \"name\": \"HiBenniDesign\",\n                        \"platform\": \"etsy\",\n                        \"profileUrl\": \"https://www.etsy.com/shop/HiBenniDesign?ref=shop-header-name\",\n                        \"pulseScore\": 67\n                    },\n                    \"pulseScoreAtExtraction\": 67\n                }\n            }\n        ],\n        \"summary\": {\n            \"total\": 3,\n            \"byType\": {\n                \"extraction\": 1,\n                \"flag\": 1,\n                \"endorsement\": 1\n            }\n        },\n        \"pagination\": {\n            \"limit\": 20,\n            \"returned\": 3,\n            \"total\": 3,\n            \"hasMore\": false\n        },\n        \"timeRange\": \"30d\"\n    }\n}"
+						}
+					]
+				},
+				{
+					"name": "Get threats",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{Token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "localhost:5002/api/users/threats/top",
+							"host": [
+								"localhost"
+							],
+							"port": "5002",
+							"path": [
+								"api",
+								"users",
+								"threats",
+								"top"
+							]
+						}
+					},
+					"response": [
+						{
+							"name": "Get threats",
+							"originalRequest": {
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "localhost:5002/api/users/threats/top",
+									"host": [
+										"localhost"
+									],
+									"port": "5002",
+									"path": [
+										"api",
+										"users",
+										"threats",
+										"top"
+									]
+								}
+							},
+							"status": "OK",
+							"code": 200,
+							"_postman_previewlanguage": "Text",
+							"header": [
+								{
+									"key": "X-Powered-By",
+									"value": "Express"
+								},
+								{
+									"key": "Access-Control-Allow-Origin",
+									"value": "*"
+								},
+								{
+									"key": "Access-Control-Allow-Credentials",
+									"value": "true"
+								},
+								{
+									"key": "Content-Type",
+									"value": "application/json; charset=utf-8"
+								},
+								{
+									"key": "Content-Length",
+									"value": "1634"
+								},
+								{
+									"key": "ETag",
+									"value": "W/\"662-MDmzoKcARugPDGwaHlVpwcBdFo0\""
+								},
+								{
+									"key": "Date",
+									"value": "Wed, 12 Nov 2025 22:55:35 GMT"
+								},
+								{
+									"key": "Connection",
+									"value": "keep-alive"
+								},
+								{
+									"key": "Keep-Alive",
+									"value": "timeout=5"
+								}
+							],
+							"cookie": [],
+							"body": "{\n    \"success\": true,\n    \"data\": {\n        \"threats\": [\n            {\n                \"sellerId\": \"69027639dc4bb2f85e58ff6b\",\n                \"sellerName\": \"Unknown\",\n                \"platform\": \"Facebook Marketplace\",\n                \"usersAffected\": 0,\n                \"timeAgo\": \"2w ago\",\n                \"location\": \"Not specified\",\n                \"riskScore\": 50,\n                \"severity\": \"MEDIUM\",\n                \"description\": \"Seller flagged for review - proceed with caution\",\n                \"lastScored\": \"2025-10-29T20:16:57.769Z\",\n                \"flagCount\": 0\n            },\n            {\n                \"sellerId\": \"6907d5b78e55f53031ff8d30\",\n                \"sellerName\": \"![tre.gif](https://jiji.ng/tre.gif)\",\n                \"platform\": \"Jiji\",\n                \"usersAffected\": 0,\n                \"timeAgo\": \"6d ago\",\n                \"location\": \"Not specified\",\n                \"riskScore\": 54,\n                \"severity\": \"MEDIUM\",\n                \"description\": \"Seller flagged for review - proceed with caution\",\n                \"lastScored\": \"2025-11-06T15:46:58.733Z\",\n                \"flagCount\": 0\n            },\n            {\n                \"sellerId\": \"690f34e2b87ab81ab3e0ccfd\",\n                \"sellerName\": \"Joyce-dan\",\n                \"platform\": \"Jumia\",\n                \"usersAffected\": 0,\n                \"timeAgo\": \"4d ago\",\n                \"location\": \"Not specified\",\n                \"riskScore\": 55,\n                \"severity\": \"MEDIUM\",\n                \"description\": \"Unverified seller with multiple fraud indicators\",\n                \"lastScored\": \"2025-11-08T12:17:38.531Z\",\n                \"flagCount\": 0\n            },\n            {\n                \"sellerId\": \"690f2be9cf323cc374a9619f\",\n                \"sellerName\": \"Pagerush\",\n                \"platform\": \"Jumia\",\n                \"usersAffected\": 0,\n                \"timeAgo\": \"4d ago\",\n                \"location\": \"Not specified\",\n                \"riskScore\": 55,\n                \"severity\": \"MEDIUM\",\n                \"description\": \"Unverified seller with multiple fraud indicators\",\n                \"lastScored\": \"2025-11-08T12:16:59.493Z\",\n                \"flagCount\": 0\n            },\n            {\n                \"sellerId\": \"690f3b44a711dbc7420c1cc4\",\n                \"sellerName\": \"Email Support\",\n                \"platform\": \"Konga\",\n                \"usersAffected\": 0,\n                \"timeAgo\": \"4d ago\",\n                \"location\": \"Not specified\",\n                \"riskScore\": 56,\n                \"severity\": \"MEDIUM\",\n                \"description\": \"Multiple red flags detected: ALL-CAPS title\",\n                \"lastScored\": \"2025-11-08T12:44:52.155Z\",\n                \"flagCount\": 0\n            }\n        ],\n        \"count\": 5,\n        \"retrievedAt\": \"2025-11-12T22:55:35.714Z\"\n    }\n}"
+						}
+					]
 				}
 			]
 		},
@@ -1201,7 +1521,7 @@
 						"header": [],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n  \"profileUrl\": \"https://jiji.ng/shop/sodtech-computech\"\n}",
+							"raw": "{\n  \"profileUrl\": \"https://www.etsy.com/shop/HiBenniDesign?ref=shop-header-name\"\n}",
 							"options": {
 								"raw": {
 									"language": "json"
@@ -1209,11 +1529,12 @@
 							}
 						},
 						"url": {
-							"raw": "localhost:5001/api/sellers/extract-profile",
+							"raw": "http://localhost:5002/api/sellers/extract-profile",
+							"protocol": "http",
 							"host": [
 								"localhost"
 							],
-							"port": "5001",
+							"port": "5002",
 							"path": [
 								"api",
 								"sellers",
@@ -1223,13 +1544,13 @@
 					},
 					"response": [
 						{
-							"name": "New Request",
+							"name": "Extract Seller Profile From Url",
 							"originalRequest": {
 								"method": "POST",
 								"header": [],
 								"body": {
 									"mode": "raw",
-									"raw": "{\n  \"profileUrl\": \"https://jiji.ng/shop/sodtech-computech\"\n}",
+									"raw": "{\n  \"profileUrl\": \"https://www.etsy.com/shop/HiBenniDesign?ref=shop-header-name\"\n}",
 									"options": {
 										"raw": {
 											"language": "json"
@@ -1237,11 +1558,12 @@
 									}
 								},
 								"url": {
-									"raw": "localhost:5001/api/sellers/extract-profile",
+									"raw": "http://localhost:5002/api/sellers/extract-profile",
+									"protocol": "http",
 									"host": [
 										"localhost"
 									],
-									"port": "5001",
+									"port": "5002",
 									"path": [
 										"api",
 										"sellers",
@@ -1259,11 +1581,7 @@
 								},
 								{
 									"key": "Access-Control-Allow-Origin",
-									"value": "http://localhost:3000"
-								},
-								{
-									"key": "Vary",
-									"value": "Origin"
+									"value": "*"
 								},
 								{
 									"key": "Access-Control-Allow-Credentials",
@@ -1275,15 +1593,15 @@
 								},
 								{
 									"key": "Content-Length",
-									"value": "2783"
+									"value": "3855"
 								},
 								{
 									"key": "ETag",
-									"value": "W/\"adf-/9WTXRR9yq2HbiIik2q2m30JaZg\""
+									"value": "W/\"f0f-N32sShKJMxFK5i0nQc01dZFISY4\""
 								},
 								{
 									"key": "Date",
-									"value": "Sat, 18 Oct 2025 17:36:31 GMT"
+									"value": "Mon, 10 Nov 2025 15:13:58 GMT"
 								},
 								{
 									"key": "Connection",
@@ -1295,7 +1613,7 @@
 								}
 							],
 							"cookie": [],
-							"body": "{\n    \"success\": true,\n    \"message\": \"Profile extracted and scored successfully\",\n    \"data\": {\n        \"seller\": {\n            \"profileData\": {\n                \"name\": \"Abdulsalam Sodeeq\",\n                \"profilePicture\": \"https://pictures-nigeria.jijistatic.net/49843082_img-20200731-080102_200x200.jpg\",\n                \"location\": \"Not specified\",\n                \"bio\": \"We deals with fixing,buying,selling and swapping of both Brand new and UK used laptops,iPhones,Samsung and other gadgets\"\n            },\n            \"scoringFactors\": {\n                \"urgencyScore\": 0,\n                \"profileCompleteness\": 80\n            },\n            \"_id\": \"68f3cc48cecb60e89241f78a\",\n            \"sellerId\": \"extracted-1760808008440\",\n            \"platform\": \"jiji\",\n            \"profileUrl\": \"https://jiji.ng/shop/sodtech-computech\",\n            \"pulseScore\": 100,\n            \"confidenceLevel\": \"high\",\n            \"lastScored\": \"2025-10-18T17:36:30.998Z\",\n            \"verificationStatus\": \"unverified\",\n            \"listingHistory\": [],\n            \"isActive\": true,\n            \"isClaimed\": false,\n            \"flags\": [],\n            \"endorsements\": [],\n            \"firstSeen\": \"2025-10-18T17:20:08.451Z\",\n            \"lastSeen\": \"2025-10-18T17:20:08.451Z\",\n            \"createdAt\": \"2025-10-18T17:20:08.456Z\",\n            \"updatedAt\": \"2025-10-18T17:36:31.008Z\"\n        },\n        \"extractedData\": {\n            \"platform\": \"jiji\",\n            \"profileUrl\": \"https://jiji.ng/shop/sodtech-computech\",\n            \"profileData\": {\n                \"name\": \"Abdulsalam Sodeeq\",\n                \"profilePicture\": \"https://pictures-nigeria.jijistatic.net/49843082_img-20200731-080102_200x200.jpg\",\n                \"location\": \"Not specified\",\n                \"bio\": \"We deals with fixing,buying,selling and swapping of both Brand new and UK used laptops,iPhones,Samsung and other gadgets\"\n            },\n            \"marketplaceData\": {\n                \"accountAge\": 60,\n                \"totalListings\": 127,\n                \"avgRating\": 0,\n                \"totalReviews\": 227,\n                \"responseRate\": 0,\n                \"verificationStatus\": \"id-verified\",\n                \"lastSeen\": \"Last seen 2 hours ago\",\n                \"followers\": 185,\n                \"categories\": [\n                    {\n                        \"name\": \"All Categories\",\n                        \"count\": 226\n                    },\n                    {\n                        \"name\": \"Mobile Phones\",\n                        \"count\": 127\n                    },\n                    {\n                        \"name\": \"Laptops & Computers\",\n                        \"count\": 59\n                    },\n                    {\n                        \"name\": \"Smart Watches\",\n                        \"count\": 15\n                    },\n                    {\n                        \"name\": \"Tablets\",\n                        \"count\": 7\n                    },\n                    {\n                        \"name\": \"Accessories & Supplies for Electronics\",\n                        \"count\": 6\n                    },\n                    {\n                        \"name\": \"Audio & Music Equipment\",\n                        \"count\": 4\n                    },\n                    {\n                        \"name\": \"Video Game Consoles\",\n                        \"count\": 4\n                    },\n                    {\n                        \"name\": \"Computer & IT Services\",\n                        \"count\": 1\n                    },\n                    {\n                        \"name\": \"Headphones\",\n                        \"count\": 1\n                    },\n                    {\n                        \"name\": \"Networking Products\",\n                        \"count\": 1\n                    },\n                    {\n                        \"name\": \"Accessories for Phones & Tablets\",\n                        \"count\": 1\n                    }\n                ]\n            },\n            \"recentListings\": [],\n            \"trustIndicators\": {\n                \"hasProfilePicture\": true,\n                \"hasLocation\": false,\n                \"hasBio\": true,\n                \"accountAge\": 60,\n                \"totalReviews\": 227,\n                \"avgRating\": 0,\n                \"verificationStatus\": \"id-verified\",\n                \"followers\": 185,\n                \"lastSeen\": \"Last seen 2 hours ago\"\n            }\n        },\n        \"scoringResult\": {\n            \"pulseScore\": 100,\n            \"confidenceLevel\": \"high\",\n            \"recommendations\": [\n                {\n                    \"type\": \"positive\",\n                    \"message\": \"High trust score indicates reliable seller with excellent track record\",\n                    \"action\": \"Safe to Purchase\"\n                },\n                {\n                    \"type\": \"warning\",\n                    \"message\": \"Poor ratings or insufficient reviews - high transaction risk\",\n                    \"action\": \"Review Feedback History\"\n                }\n            ],\n            \"trustIndicators\": {\n                \"accountVerification\": \"100%\",\n                \"transactionHistory\": \"100%\",\n                \"communicationQuality\": \"0%\",\n                \"disputeResolution\": \"0%\"\n            },\n            \"riskFactors\": [\n                \"Poor customer ratings\"\n            ]\n        }\n    }\n}"
+							"body": "{\n    \"success\": true,\n    \"message\": \"Profile extracted and scored successfully\",\n    \"data\": {\n        \"seller\": {\n            \"profileData\": {\n                \"name\": \"HiBenniDesign\",\n                \"profilePicture\": \"https://i.etsystatic.com/24244048/r/isbl/80d428/78273441/isbl_1680x420.78273441_8tdmvoe4.jpg\",\n                \"location\": \"Delano, California\",\n                \"bio\": \"Stickers for your collection Sales 6,674 On Etsy since 2020 Stickers for your collection\"\n            },\n            \"marketplaceData\": {\n                \"accountAge\": 60,\n                \"totalListings\": 0,\n                \"avgRating\": 5,\n                \"totalReviews\": 1497,\n                \"responseRate\": 0,\n                \"verificationStatus\": \"verified\",\n                \"lastSeen\": \"0\",\n                \"followers\": 414,\n                \"sellerScore\": 100,\n                \"successfulSales\": 5,\n                \"categories\": [],\n                \"customerReviews\": []\n            },\n            \"trustIndicators\": {\n                \"hasProfilePicture\": true,\n                \"hasLocation\": true,\n                \"hasBio\": true,\n                \"accountAge\": 60,\n                \"totalReviews\": 1497,\n                \"avgRating\": 5,\n                \"verificationStatus\": \"verified\",\n                \"followers\": 414,\n                \"lastSeen\": \"0\"\n            },\n            \"_id\": \"690f3c9e7d4864608e0b6a98\",\n            \"userId\": null,\n            \"sellerId\": \"extracted-1762606238091-1\",\n            \"platform\": \"etsy\",\n            \"profileUrl\": \"https://www.etsy.com/shop/HiBenniDesign?ref=shop-header-name\",\n            \"pulseScore\": 67,\n            \"confidenceLevel\": \"High\",\n            \"verificationStatus\": \"unverified\",\n            \"listingHistory\": [],\n            \"isActive\": true,\n            \"isClaimed\": false,\n            \"recentListings\": [],\n            \"lastScored\": \"2025-11-10T15:13:58.590Z\",\n            \"flags\": [],\n            \"endorsements\": [],\n            \"scoringFactors\": {\n                \"verificationIdentity\": {\n                    \"score\": 20,\n                    \"available\": true,\n                    \"breakdown\": {\n                        \"verificationType\": \"Not Verified\",\n                        \"profilePhoto\": true,\n                        \"location\": true\n                    }\n                },\n                \"accountMaturity\": {\n                    \"score\": 100,\n                    \"available\": true,\n                    \"breakdown\": {\n                        \"months\": 60,\n                        \"years\": \"5.0\"\n                    }\n                },\n                \"listingCompleteness\": {\n                    \"score\": null,\n                    \"available\": false,\n                    \"breakdown\": {\n                        \"message\": \"Listings not exposed by platform\"\n                    }\n                },\n                \"activityRecency\": {\n                    \"score\": 100,\n                    \"available\": true,\n                    \"breakdown\": {\n                        \"lastSeenDays\": 0,\n                        \"category\": \"Very Active\"\n                    }\n                },\n                \"engagement\": {\n                    \"score\": null,\n                    \"available\": false,\n                    \"breakdown\": {\n                        \"message\": \"Response rate not available\"\n                    }\n                },\n                \"communityFeedback\": {\n                    \"score\": 100,\n                    \"available\": true,\n                    \"breakdown\": {\n                        \"marketplaceReviews\": 1497,\n                        \"averageRating\": 5,\n                        \"veribleEndorsements\": 0,\n                        \"veribleFlags\": 0,\n                        \"netFeedback\": 0\n                    }\n                },\n                \"behavioralRedFlags\": {\n                    \"score\": null,\n                    \"available\": false,\n                    \"breakdown\": {\n                        \"message\": \"Platform does not expose listings for behavioral analysis\"\n                    }\n                }\n            },\n            \"firstSeen\": \"2025-11-08T12:50:38.099Z\",\n            \"lastSeen\": \"2025-11-08T12:50:38.099Z\",\n            \"createdAt\": \"2025-11-08T12:50:38.110Z\",\n            \"updatedAt\": \"2025-11-10T15:13:58.596Z\"\n        },\n        \"extractedData\": {\n            \"platform\": \"etsy\",\n            \"profileUrl\": \"https://www.etsy.com/shop/HiBenniDesign?ref=shop-header-name\",\n            \"profileData\": {\n                \"name\": \"HiBenniDesign\",\n                \"profilePicture\": \"https://i.etsystatic.com/24244048/r/isbl/80d428/78273441/isbl_1680x420.78273441_8tdmvoe4.jpg\",\n                \"location\": \"Delano, California\",\n                \"bio\": \"Stickers for your collection Sales 6,674 On Etsy since 2020 Stickers for your collection\"\n            },\n            \"marketplaceData\": {\n                \"accountAge\": 60,\n                \"totalListings\": 0,\n                \"avgRating\": 5,\n                \"totalReviews\": 1497,\n                \"responseRate\": 0,\n                \"verificationStatus\": \"verified\",\n                \"lastSeen\": \"0\",\n                \"followers\": 414,\n                \"sellerScore\": 100,\n                \"successfulSales\": 5,\n                \"categories\": [],\n                \"customerReviews\": [],\n                \"shopPolicies\": {\n                    \"acceptedPayments\": [\n                        \"Paypal\",\n                        \"Visa\",\n                        \"Mastercard\",\n                        \"Discover\",\n                        \"Apple\",\n                        \"Pay\",\n                        \"Klarna\",\n                        \"Giftcard\",\n                        \"Accepts\",\n                        \"Etsy\",\n                        \"Gift\",\n                        \"Cards and\",\n                        \"Etsy\",\n                        \"Credits\"\n                    ],\n                    \"returnsPolicy\": \"\"\n                }\n            },\n            \"recentListings\": [],\n            \"trustIndicators\": {\n                \"hasProfilePicture\": true,\n                \"hasLocation\": true,\n                \"hasBio\": true,\n                \"accountAge\": 60,\n                \"totalReviews\": 1497,\n                \"avgRating\": 5,\n                \"verificationStatus\": \"verified\",\n                \"followers\": 414,\n                \"lastSeen\": \"0\"\n            },\n            \"dataAvailability\": {\n                \"profilePicture\": \"available\",\n                \"location\": \"available\",\n                \"bio\": \"available\",\n                \"recentListings\": \"platform_unavailable\"\n            }\n        },\n        \"scoringResult\": {\n            \"pulseScore\": 67,\n            \"confidenceLevel\": \"High\",\n            \"recommendations\": [\n                {\n                    \"type\": \"positive\",\n                    \"priority\": \"medium\",\n                    \"message\": \"Good trust indicators with minor concerns\",\n                    \"action\": \"Consider for Purchase\"\n                },\n                {\n                    \"type\": \"warning\",\n                    \"priority\": \"high\",\n                    \"message\": \"Seller is not verified - identity cannot be confirmed\",\n                    \"action\": \"Request verification before proceeding\"\n                }\n            ],\n            \"riskFactors\": [\n                {\n                    \"category\": \"Verification & Identity\",\n                    \"severity\": \"high\",\n                    \"issue\": \"Unverified seller identity\"\n                }\n            ]\n        }\n    }\n}"
 						}
 					]
 				},
