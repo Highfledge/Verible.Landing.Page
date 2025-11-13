@@ -8,10 +8,13 @@ import { useAuth } from "@/lib/stores/auth-store"
 import { usePathname } from "next/navigation"
 
 export function StickyBottomBar() {
-  const { isLoggedIn, user } = useAuth()
+  const { isLoggedIn, user, isBuyerView } = useAuth()
   const pathname = usePathname()
   
-  const isBuyer = isLoggedIn && user?.role === "user"
+  // Use viewMode to determine if showing buyer view
+  // If user is a seller, they can toggle between views
+  // If user is a buyer, they always see buyer view
+  const isBuyer = isLoggedIn && (user?.role === "user" || (user?.role === "seller" && isBuyerView))
   
   return (
     <div className="fixed bottom-0 left-0 right-0 z-50 bg-[#1D2973] border-t border-[#1a2468] shadow-lg">

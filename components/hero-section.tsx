@@ -62,9 +62,12 @@ const INITIAL_SELLER_PROFILE_STATE: SellerProfileState = {
 }
 
 export function HeroSection() {
-  const { user, isLoggedIn } = useAuth()
-  const isSeller = user?.role === "seller"
-  const isBuyer = isLoggedIn && user?.role === "user"
+  const { user, isLoggedIn, viewMode, isSellerView, isBuyerView } = useAuth()
+  // Use viewMode to determine if showing seller or buyer view
+  // If user is a seller, they can toggle between views
+  // If user is a buyer, they always see buyer view
+  const isSeller = user?.role === "seller" && isSellerView
+  const isBuyer = isLoggedIn && (user?.role === "user" || (user?.role === "seller" && isBuyerView))
   
   // Consolidated state
   const [searchState, setSearchState] = useState<SearchState>(INITIAL_SEARCH_STATE)
@@ -142,7 +145,7 @@ export function HeroSection() {
       
       updateSearchState({ isSearching: true, result: null })
       try {
-        const response = await sellersAPI.scoreByUrl({
+        const response = await sellersAPI.extractProfile({
           profileUrl: profileUrl.trim()
         })
 

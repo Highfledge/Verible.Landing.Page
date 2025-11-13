@@ -40,12 +40,15 @@ export interface User {
   updatedAt: string
 }
 
+export type ViewMode = 'buyer' | 'seller'
+
 interface AuthState {
   // State
   isAuthenticated: boolean
   user: User | null
   token: string | null
   isLoading: boolean
+  viewMode: ViewMode // Current view mode (buyer or seller)
   
   // Actions
   login: (token: string, user: User) => void
@@ -53,6 +56,8 @@ interface AuthState {
   updateUser: (user: Partial<User>) => void
   setLoading: (loading: boolean) => void
   clearAuth: () => void
+  toggleViewMode: () => void
+  setViewMode: (mode: ViewMode) => void
 }
 
 export const useAuthStore = create<AuthState>()(
@@ -63,6 +68,7 @@ export const useAuthStore = create<AuthState>()(
       user: null,
       token: null,
       isLoading: false,
+      viewMode: 'buyer' as ViewMode,
 
       // Actions
       login: (token: string, user: User) => {
@@ -71,6 +77,8 @@ export const useAuthStore = create<AuthState>()(
           token,
           user,
           isLoading: false,
+          // Set default view mode based on user role - sellers start in seller view
+          viewMode: user.role === 'seller' ? 'seller' : 'buyer',
         })
       },
 
@@ -104,8 +112,19 @@ export const useAuthStore = create<AuthState>()(
           token: null,
           user: null,
           isLoading: false,
+          viewMode: 'buyer',
         })
         secureStorage.removeItem('auth-storage')
+      },
+
+      toggleViewMode: () => {
+        const currentMode = get().viewMode
+        const newMode: ViewMode = currentMode === 'buyer' ? 'seller' : 'buyer'
+        set({ viewMode: newMode })
+      },
+
+      setViewMode: (mode: ViewMode) => {
+        set({ viewMode: mode })
       },
     }),
     {
@@ -116,6 +135,7 @@ export const useAuthStore = create<AuthState>()(
         isAuthenticated: state.isAuthenticated,
         user: state.user,
         token: state.token,
+        viewMode: state.viewMode,
       }),
     }
   )
@@ -131,6 +151,9 @@ export const useAuth = () => {
     userName: store.user?.name || '',
     userEmail: store.user?.email || '',
     userRole: store.user?.role || 'user',
+    // View mode helpers
+    isBuyerView: store.viewMode === 'buyer',
+    isSellerView: store.viewMode === 'seller',
   }
 }
 

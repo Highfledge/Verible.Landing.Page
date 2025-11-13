@@ -1,10 +1,15 @@
 "use client"
 
-import { useState, Suspense } from "react"
+import { useState, useEffect, Suspense } from "react"
 import { Header } from "@/components/header"
 import { StickyBottomBar } from "@/components/sticky-bottom-bar"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Users, Activity, Shield, BarChart3, ArrowUpRight, ArrowDownRight, TrendingUp, AlertTriangle, CheckCircle2, Network, Globe, Brain, Eye, Clock, Star, Info, ChevronDown, Lock } from "lucide-react"
+import { Users, Activity, Shield, BarChart3, ArrowUpRight, ArrowDownRight, TrendingUp, AlertTriangle, CheckCircle2, Network, Globe, Brain, Eye, Clock, Star, Info, ChevronDown, Lock, Loader2 } from "lucide-react"
+import { RecentActivity } from "@/components/recent-activity"
+import { usersAPI } from "@/lib/api/client"
+import { useAuth } from "@/lib/stores/auth-store"
+import { cleanText } from "@/lib/utils/clean-data"
+import { toast } from "sonner"
 import Link from "next/link"
 import { cn } from "@/lib/utils"
 
@@ -34,38 +39,62 @@ const supportedPlatforms = [
   "Facebook Marketplace",
 ]
 
-const threatAlerts = [
-  {
-    severity: "HIGH",
-    message: "New seller 'QuickDeals_99' flagged with suspicious patterns",
-    action: "Auto-blocked",
-    timeAgo: "5m ago",
-    icon: AlertTriangle,
-    color: "text-red-600",
-    bgColor: "bg-red-50",
-    borderColor: "border-red-200",
-  },
-  {
-    severity: "MEDIUM",
-    message: "Detected coordinated fake reviews on Amazon marketplace",
-    action: "Investigating",
-    timeAgo: "12m ago",
-    icon: AlertTriangle,
-    color: "text-orange-600",
-    bgColor: "bg-orange-50",
-    borderColor: "border-orange-200",
-  },
-  {
-    severity: "LOW",
-    message: "Unusual seller activity spike detected on eBay",
-    action: "Monitoring",
-    timeAgo: "18m ago",
-    icon: AlertTriangle,
-    color: "text-blue-600",
-    bgColor: "bg-blue-50",
-    borderColor: "border-blue-200",
-  },
-]
+// Threat interface matching API response
+interface Threat {
+  sellerId: string
+  sellerName: string
+  platform: string
+  usersAffected: number
+  timeAgo: string
+  location: string
+  riskScore: number
+  severity: "CRITICAL" | "HIGH" | "MEDIUM" | "LOW"
+  description: string
+  lastScored: string
+  flagCount: number
+}
+
+// Helper function to get severity styling
+const getSeverityStyles = (severity: string) => {
+  const normalized = severity.toLowerCase()
+  switch (normalized) {
+    case "critical":
+      return {
+        color: "text-red-600",
+        bgColor: "bg-red-50",
+        borderColor: "border-red-200",
+        badgeColor: "bg-red-100 text-red-700"
+      }
+    case "high":
+      return {
+        color: "text-orange-600",
+        bgColor: "bg-orange-50",
+        borderColor: "border-orange-200",
+        badgeColor: "bg-orange-100 text-orange-700"
+      }
+    case "medium":
+      return {
+        color: "text-yellow-600",
+        bgColor: "bg-yellow-50",
+        borderColor: "border-yellow-200",
+        badgeColor: "bg-yellow-100 text-yellow-700"
+      }
+    case "low":
+      return {
+        color: "text-blue-600",
+        bgColor: "bg-blue-50",
+        borderColor: "border-blue-200",
+        badgeColor: "bg-blue-100 text-blue-700"
+      }
+    default:
+      return {
+        color: "text-gray-600",
+        bgColor: "bg-gray-50",
+        borderColor: "border-gray-200",
+        badgeColor: "bg-gray-100 text-gray-700"
+      }
+  }
+}
 
 const platformCoverage = [
   { name: "Amazon", scans: 5420, coverage: 95, dotColor: "bg-orange-500" },
@@ -262,8 +291,50 @@ const platformPerformanceData = [
 ]
 
 function AnalyticsContent() {
+  const { isLoggedIn, user } = useAuth()
   const [activeTab, setActiveTab] = useState("overview")
   const [advancedSubTab, setAdvancedSubTab] = useState("trust-trends")
+  const [threats, setThreats] = useState<Threat[]>([])
+  const [isLoadingThreats, setIsLoadingThreats] = useState(true)
+  const [threatsError, setThreatsError] = useState<string | null>(null)
+
+  // Fetch threats data
+  useEffect(() => {
+    if (!isLoggedIn || user?.role !== "user") {
+      setIsLoadingThreats(false)
+      return
+    }
+
+    const fetchThreats = async () => {
+      setIsLoadingThreats(true)
+      setThreatsError(null)
+      try {
+        const response = await usersAPI.getTopThreats({
+          limit: 10
+        })
+        
+        if (response.success && response.data) {
+          // Clean the threats data
+          const cleanedThreats = response.data.threats.map((threat: Threat) => ({
+            ...threat,
+            sellerName: cleanText(threat.sellerName) || "Unknown Seller",
+            description: cleanText(threat.description) || "No description available",
+            location: cleanText(threat.location) || "Not specified"
+          }))
+          setThreats(cleanedThreats)
+        } else {
+          setThreatsError("Failed to load threats")
+        }
+      } catch (err: any) {
+        console.error("Error fetching threats:", err)
+        setThreatsError(err.response?.data?.message || "Failed to load threats")
+      } finally {
+        setIsLoadingThreats(false)
+      }
+    }
+
+    fetchThreats()
+  }, [isLoggedIn, user])
 
   return (
     <div className="min-h-screen bg-gray-50 pb-24">
@@ -627,61 +698,78 @@ function AnalyticsContent() {
                 </div>
               </CardHeader>
               <CardContent className="p-6">
-                <div className="space-y-4">
-                  {threatAlerts.map((alert, index) => {
-                    const Icon = alert.icon
-                    return (
-                      <div
-                        key={index}
-                        className={cn(
-                          "p-4 rounded-lg border-2",
-                          alert.bgColor,
-                          alert.borderColor
-                        )}
-                      >
-                        <div className="flex items-start space-x-3">
-                          <Icon className={cn("w-5 h-5 mt-0.5", alert.color)} />
-                          <div className="flex-1">
-                            <div className="flex items-center space-x-2 mb-1">
-                              <span
-                                className={cn(
-                                  "px-2 py-0.5 text-xs font-semibold rounded",
-                                  alert.severity === "HIGH"
-                                    ? "bg-red-100 text-red-700"
-                                    : alert.severity === "MEDIUM"
-                                    ? "bg-orange-100 text-orange-700"
-                                    : "bg-blue-100 text-blue-700"
-                                )}
-                              >
-                                {alert.severity}
-                              </span>
-                            </div>
-                            <p className="text-sm font-medium text-gray-900 mb-1">
-                              {alert.message}
-                            </p>
-                            <div className="flex items-center justify-between mt-2">
-                              <span className="text-xs text-gray-600">
-                                Action: <span className="font-medium">{alert.action}</span>
-                              </span>
-                              <span className="text-xs text-gray-500">{alert.timeAgo}</span>
+                {isLoadingThreats ? (
+                  <div className="flex items-center justify-center py-12">
+                    <Loader2 className="w-6 h-6 animate-spin text-blue-600" />
+                    <span className="ml-2 text-gray-600">Loading threats...</span>
+                  </div>
+                ) : threatsError ? (
+                  <div className="p-4 bg-red-50 border border-red-200 rounded-lg">
+                    <p className="text-sm text-red-600">{threatsError}</p>
+                  </div>
+                ) : threats.length === 0 ? (
+                  <div className="text-center py-12">
+                    <AlertTriangle className="w-12 h-12 text-gray-400 mx-auto mb-3" />
+                    <p className="text-gray-600 font-medium">No threats detected</p>
+                    <p className="text-sm text-gray-500 mt-1">All clear! No active threats at this time.</p>
+                  </div>
+                ) : (
+                  <div className="space-y-4">
+                    {threats.slice(0, 5).map((threat) => {
+                      const styles = getSeverityStyles(threat.severity)
+                      return (
+                        <div
+                          key={threat.sellerId}
+                          className={cn(
+                            "p-4 rounded-lg border-2",
+                            styles.bgColor,
+                            styles.borderColor
+                          )}
+                        >
+                          <div className="flex items-start space-x-3">
+                            <AlertTriangle className={cn("w-5 h-5 mt-0.5 flex-shrink-0", styles.color)} />
+                            <div className="flex-1">
+                              <div className="flex items-center space-x-2 mb-2">
+                                <span className={cn("px-2 py-0.5 text-xs font-semibold rounded", styles.badgeColor)}>
+                                  {threat.severity}
+                                </span>
+                                <span className="text-xs text-gray-500">Risk Score: {threat.riskScore}</span>
+                              </div>
+                              <p className="text-sm font-medium text-gray-900 mb-1">
+                                {threat.description}
+                              </p>
+                              <div className="flex items-center justify-between mt-2 flex-wrap gap-2">
+                                <div className="flex items-center space-x-4 text-xs text-gray-600">
+                                  <span>Seller: <span className="font-medium text-gray-900">{threat.sellerName}</span></span>
+                                  <span>•</span>
+                                  <span>{threat.platform}</span>
+                                  {threat.usersAffected > 0 && (
+                                    <>
+                                      <span>•</span>
+                                      <span>{threat.usersAffected} affected</span>
+                                    </>
+                                  )}
+                                </div>
+                                <span className="text-xs text-gray-500">{threat.timeAgo}</span>
+                              </div>
                             </div>
                           </div>
                         </div>
-                      </div>
-                    )
-                  })}
-                </div>
+                      )
+                    })}
+                  </div>
+                )}
               </CardContent>
             </Card>
 
             {/* Platform Coverage & Recent Activity Section */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-stretch">
               {/* Platform Coverage */}
-              <Card className="border shadow-sm">
+              <Card className="border shadow-sm flex flex-col h-full">
                 <CardHeader>
                   <CardTitle className="text-lg font-semibold">Platform Coverage</CardTitle>
                 </CardHeader>
-                <CardContent>
+                <CardContent className="flex flex-col">
                   <div className="space-y-4">
                     {platformCoverage.map((platform, index) => (
                       <div key={index} className="space-y-2">
@@ -714,129 +802,13 @@ function AnalyticsContent() {
               </Card>
 
               {/* Recent Activity */}
-              <Card className="border shadow-sm">
+              <Card className="border shadow-sm flex flex-col h-full">
                 <CardHeader>
                   <CardTitle className="text-lg font-semibold">Recent Activity</CardTitle>
                 </CardHeader>
-                <CardContent>
-                  <div className="py-12 text-center text-gray-500">
-                    <p className="text-sm">No recent activity</p>
-                  </div>
-                </CardContent>
-              </Card>
-            </div>
-
-            {/* Live Threat Intelligence */}
-            <Card className="border shadow-sm overflow-hidden">
-              <CardHeader className="bg-gradient-to-r from-orange-500 to-blue-500 text-white p-6 relative">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center space-x-2">
-                    <AlertTriangle className="w-5 h-5" />
-                    <CardTitle className="text-lg font-semibold text-white">
-                      Live Threat Intelligence
-                    </CardTitle>
-                  </div>
-                  <div className="flex items-center space-x-2 bg-green-500 px-3 py-1 rounded-full">
-                    <div className="w-2 h-2 bg-white rounded-full animate-pulse" />
-                    <span className="text-xs font-medium text-white">Live</span>
-                  </div>
-                </div>
-              </CardHeader>
-              <CardContent className="p-6">
-                <div className="space-y-4">
-                  {threatAlerts.map((alert, index) => {
-                    const Icon = alert.icon
-                    return (
-                      <div
-                        key={index}
-                        className={cn(
-                          "p-4 rounded-lg border-2",
-                          alert.bgColor,
-                          alert.borderColor
-                        )}
-                      >
-                        <div className="flex items-start space-x-3">
-                          <Icon className={cn("w-5 h-5 mt-0.5", alert.color)} />
-                          <div className="flex-1">
-                            <div className="flex items-center space-x-2 mb-1">
-                              <span
-                                className={cn(
-                                  "px-2 py-0.5 text-xs font-semibold rounded",
-                                  alert.severity === "HIGH"
-                                    ? "bg-red-100 text-red-700"
-                                    : alert.severity === "MEDIUM"
-                                    ? "bg-orange-100 text-orange-700"
-                                    : "bg-blue-100 text-blue-700"
-                                )}
-                              >
-                                {alert.severity}
-                              </span>
-                            </div>
-                            <p className="text-sm font-medium text-gray-900 mb-1">
-                              {alert.message}
-                            </p>
-                            <div className="flex items-center justify-between mt-2">
-                              <span className="text-xs text-gray-600">
-                                Action: <span className="font-medium">{alert.action}</span>
-                              </span>
-                              <span className="text-xs text-gray-500">{alert.timeAgo}</span>
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-                    )
-                  })}
-                </div>
-              </CardContent>
-            </Card>
-
-            {/* Platform Coverage & Recent Activity Section */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-              {/* Platform Coverage */}
-              <Card className="border shadow-sm">
-                <CardHeader>
-                  <CardTitle className="text-lg font-semibold">Platform Coverage</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-4">
-                    {platformCoverage.map((platform, index) => (
-                      <div key={index} className="space-y-2">
-                        <div className="flex items-center justify-between mb-1">
-                          <div className="flex items-center space-x-2">
-                            <div className={cn("w-3 h-3 rounded-full", platform.dotColor)} />
-                            <span className="text-sm font-medium text-gray-900">
-                              {platform.name}
-                            </span>
-                          </div>
-                          <div className="flex items-center space-x-2">
-                            <span className="text-sm text-gray-600">
-                              {platform.scans.toLocaleString()} scans
-                            </span>
-                            <span className="text-sm font-medium text-gray-900">
-                              {platform.coverage}%
-                            </span>
-                          </div>
-                        </div>
-                        <div className="h-2 bg-gray-200 rounded-full overflow-hidden">
-                          <div
-                            className="h-full bg-blue-500 rounded-full"
-                            style={{ width: `${platform.coverage}%` }}
-                          />
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </CardContent>
-              </Card>
-
-              {/* Recent Activity */}
-              <Card className="border shadow-sm">
-                <CardHeader>
-                  <CardTitle className="text-lg font-semibold">Recent Activity</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="py-12 text-center text-gray-500">
-                    <p className="text-sm">No recent activity</p>
+                <CardContent className="flex flex-col flex-1 min-h-0 overflow-hidden">
+                  <div className="flex-1 overflow-y-auto pr-2 scrollbar-thin">
+                    <RecentActivity hideHeader compact />
                   </div>
                 </CardContent>
               </Card>
@@ -1353,93 +1325,108 @@ function AnalyticsContent() {
                 </div>
               </CardHeader>
               <CardContent className="space-y-6">
-                {/* Charts Placeholder */}
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <div className="space-y-2">
-                    <div className="h-64 bg-gradient-to-b from-blue-50 to-blue-100 rounded-lg flex items-end justify-center p-4">
-                      <div className="relative w-full h-full flex items-end justify-center">
-                        {/* Simple bar chart representation */}
-                        <div className="absolute bottom-0 left-0 right-0 flex items-end justify-around px-4 pb-2">
-                          {[40, 55, 65, 85, 72, 60, 75].map((height, index) => (
-                            <div
-                              key={index}
-                              className="w-8 bg-blue-400 rounded-t"
-                              style={{ height: `${height}%` }}
-                            />
-                          ))}
+                {isLoadingThreats ? (
+                  <div className="flex items-center justify-center py-12">
+                    <Loader2 className="w-6 h-6 animate-spin text-blue-600" />
+                    <span className="ml-2 text-gray-600">Loading threats...</span>
+                  </div>
+                ) : threatsError ? (
+                  <div className="p-4 bg-red-50 border border-red-200 rounded-lg">
+                    <p className="text-sm text-red-600">{threatsError}</p>
+                  </div>
+                ) : threats.length === 0 ? (
+                  <div className="text-center py-12">
+                    <AlertTriangle className="w-12 h-12 text-gray-400 mx-auto mb-3" />
+                    <p className="text-gray-600 font-medium">No threats detected</p>
+                    <p className="text-sm text-gray-500 mt-1">All clear! No active threats at this time.</p>
+                  </div>
+                ) : (
+                  <>
+                    {/* Summary Metrics */}
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                      <div className="bg-blue-50 rounded-lg p-4 border border-blue-200">
+                        <div className="text-2xl font-bold text-gray-900">{threats.length}</div>
+                        <div className="text-xs text-gray-600 mt-1">Total Threats</div>
+                      </div>
+                      <div className="bg-red-50 rounded-lg p-4 border border-red-200">
+                        <div className="text-2xl font-bold text-gray-900">
+                          {threats.filter(t => t.severity === "CRITICAL" || t.severity === "HIGH").length}
                         </div>
-                        {/* Line overlay */}
-                        <svg className="absolute bottom-0 left-0 right-0 h-full w-full" style={{ height: "100%" }}>
-                          <polyline
-                            points="10,60 40,50 70,40 100,20 130,30 160,35 190,25"
-                            fill="none"
-                            stroke="#ec4899"
-                            strokeWidth="2"
-                            className="opacity-75"
-                          />
-                        </svg>
-                        <div className="absolute top-4 right-4 text-sm font-semibold text-gray-700">
-                          52.1%
+                        <div className="text-xs text-gray-600 mt-1">Critical Alerts</div>
+                      </div>
+                      <div className="bg-orange-50 rounded-lg p-4 border border-orange-200">
+                        <div className="text-2xl font-bold text-gray-900">
+                          {threats.reduce((sum, t) => sum + (t.usersAffected || 0), 0)}
                         </div>
+                        <div className="text-xs text-gray-600 mt-1">Users Affected</div>
+                      </div>
+                      <div className="bg-green-50 rounded-lg p-4 border border-green-200">
+                        <div className="text-2xl font-bold text-gray-900">
+                          {threats.length > 0 ? Math.round(threats.reduce((sum, t) => sum + t.riskScore, 0) / threats.length) : 0}
+                        </div>
+                        <div className="text-xs text-gray-600 mt-1">Avg Risk Score</div>
                       </div>
                     </div>
-                  </div>
 
-                  <div className="space-y-2">
-                    <div className="h-64 bg-gradient-to-b from-blue-50 to-blue-100 rounded-lg flex items-end justify-center p-4">
-                      <div className="relative w-full h-full flex items-end justify-center">
-                        {/* Simple bar chart representation */}
-                        <div className="absolute bottom-0 left-0 right-0 flex items-end justify-around px-4 pb-2">
-                          {[45, 60, 70, 80, 68, 58, 72].map((height, index) => (
+                    {/* Threats List */}
+                    <div className="space-y-4">
+                      <h3 className="text-sm font-semibold text-gray-700">Active Threats</h3>
+                      <div className="space-y-3">
+                        {threats.map((threat) => {
+                          const styles = getSeverityStyles(threat.severity)
+                          return (
                             <div
-                              key={index}
-                              className="w-8 bg-blue-400 rounded-t"
-                              style={{ height: `${height}%` }}
-                            />
-                          ))}
-                        </div>
-                        {/* Line overlay */}
-                        <svg className="absolute bottom-0 left-0 right-0 h-full w-full" style={{ height: "100%" }}>
-                          <polyline
-                            points="10,55 40,45 70,35 100,25 130,30 160,38 190,28"
-                            fill="none"
-                            stroke="#ec4899"
-                            strokeWidth="2"
-                            className="opacity-75"
-                          />
-                        </svg>
+                              key={threat.sellerId}
+                              className={cn(
+                                "p-4 rounded-lg border-2",
+                                styles.bgColor,
+                                styles.borderColor
+                              )}
+                            >
+                              <div className="flex items-start space-x-3">
+                                <AlertTriangle className={cn("w-5 h-5 mt-0.5 flex-shrink-0", styles.color)} />
+                                <div className="flex-1">
+                                  <div className="flex items-center space-x-2 mb-2 flex-wrap">
+                                    <span className={cn("px-2 py-0.5 text-xs font-semibold rounded", styles.badgeColor)}>
+                                      {threat.severity}
+                                    </span>
+                                    <span className="text-xs text-gray-500">Risk Score: {threat.riskScore}</span>
+                                    {threat.flagCount > 0 && (
+                                      <span className="text-xs text-gray-500">• {threat.flagCount} flags</span>
+                                    )}
+                                  </div>
+                                  <p className="text-sm font-medium text-gray-900 mb-1">
+                                    {threat.description}
+                                  </p>
+                                  <div className="flex items-center justify-between mt-2 flex-wrap gap-2">
+                                    <div className="flex items-center space-x-4 text-xs text-gray-600">
+                                      <span>Seller: <span className="font-medium text-gray-900">{threat.sellerName}</span></span>
+                                      <span>•</span>
+                                      <span className="capitalize">{threat.platform}</span>
+                                      {threat.location && (
+                                        <>
+                                          <span>•</span>
+                                          <span>{threat.location}</span>
+                                        </>
+                                      )}
+                                      {threat.usersAffected > 0 && (
+                                        <>
+                                          <span>•</span>
+                                          <span className="text-red-600 font-medium">{threat.usersAffected} affected</span>
+                                        </>
+                                      )}
+                                    </div>
+                                    <span className="text-xs text-gray-500">{threat.timeAgo}</span>
+                                  </div>
+                                </div>
+                              </div>
+                            </div>
+                          )
+                        })}
                       </div>
                     </div>
-                  </div>
-                </div>
-
-                {/* Metrics Row */}
-                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4 pt-4 border-t">
-                  <div className="text-center">
-                    <div className="text-2xl font-bold text-gray-900">0.7s</div>
-                    <div className="text-xs text-gray-600 mt-1">Avg Response Time</div>
-                  </div>
-                  <div className="text-center">
-                    <div className="text-2xl font-bold text-gray-900">2.7M</div>
-                    <div className="text-xs text-gray-600 mt-1">Events Processed</div>
-                  </div>
-                  <div className="text-center">
-                    <div className="text-2xl font-bold text-gray-900">40.6%</div>
-                    <div className="text-xs text-gray-600 mt-1">False Positives</div>
-                  </div>
-                  <div className="text-center">
-                    <div className="text-2xl font-bold text-gray-900">47K</div>
-                    <div className="text-xs text-gray-600 mt-1">Active Threats</div>
-                  </div>
-                  <div className="text-center">
-                    <div className="text-2xl font-bold text-gray-900">17min</div>
-                    <div className="text-xs text-gray-600 mt-1">Avg Resolution Time</div>
-                  </div>
-                  <div className="text-center">
-                    <div className="text-2xl font-bold text-gray-900">2pvs</div>
-                    <div className="text-xs text-gray-600 mt-1">Threat Velocity</div>
-                  </div>
-                </div>
+                  </>
+                )}
               </CardContent>
             </Card>
           </div>

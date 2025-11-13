@@ -11,7 +11,7 @@ import { toast } from "sonner"
 
 export function QuickActions() {
   const router = useRouter()
-  const { isLoggedIn, user } = useAuth()
+  const { isLoggedIn, user, isSellerView, isBuyerView } = useAuth()
   const [showFeedbacks, setShowFeedbacks] = useState(false)
   const [feedbackData, setFeedbackData] = useState<any | null>(null)
   const [isLoadingFeedbacks, setIsLoadingFeedbacks] = useState(false)
@@ -135,8 +135,14 @@ export function QuickActions() {
     }
   }
 
-  // Seller-specific actions
-  if (user?.role === "seller") {
+  // Use viewMode to determine if showing seller or buyer view
+  // If user is a seller, they can toggle between views
+  // If user is a buyer, they always see buyer view
+  const isSeller = user?.role === "seller" && isSellerView
+  const isBuyer = isLoggedIn && (user?.role === "user" || (user?.role === "seller" && isBuyerView))
+
+  // Seller-specific actions (only when in seller view)
+  if (isSeller) {
     const sellerActions = [
       {
         label: "My Feedbacks",
@@ -485,8 +491,8 @@ export function QuickActions() {
     )
   }
 
-  // Buyer-specific actions
-  if (user?.role === "user") {
+  // Buyer-specific actions (for buyers or sellers viewing as buyer)
+  if (isBuyer) {
     const buyerActions = [
     {
       label: "Seller Lookup",

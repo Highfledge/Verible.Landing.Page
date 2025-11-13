@@ -59,7 +59,7 @@ const SELLERS_PER_PAGE = 10
 const INITIAL_FETCH_LIMIT = 100 // Fetch 100 sellers at once
 
 export function SellersSection() {
-  const { isLoggedIn, user } = useAuth()
+  const { isLoggedIn, user, isBuyerView } = useAuth()
   const [filter, setFilter] = useState<FilterType>("top")
   const [searchInput, setSearchInput] = useState("") // Input field value
   const [searchQuery, setSearchQuery] = useState("") // Actual search query used for API
@@ -249,8 +249,9 @@ export function SellersSection() {
     }
   }
 
-  // Only show to logged-in buyers
-  if (!isLoggedIn || user?.role !== 'user') {
+  // Only show to logged-in buyers (or sellers viewing as buyer)
+  const isBuyer = isLoggedIn && (user?.role === "user" || (user?.role === "seller" && isBuyerView))
+  if (!isBuyer) {
     return null
   }
 

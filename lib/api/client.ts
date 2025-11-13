@@ -286,5 +286,32 @@ export const usersAPI = {
   getMyInteractions: async () => {
     const response = await apiClient.get('/api/users/my-interactions')
     return response.data
+  },
+
+  // Get recent activity
+  getRecentActivity: async (params?: {
+    limit?: number
+    offset?: number
+    timeRange?: string
+  }) => {
+    const response = await apiClient.get('/api/users/recent-activity', { params })
+    return response.data
+  },
+
+  // Get top threats
+  getTopThreats: async (params?: {
+    limit?: number
+    offset?: number
+  }) => {
+    const response = await apiClient.get('/api/users/threats/top', { params })
+    return response.data
+  },
+
+  // Get my extractions
+  getMyExtractions: async (params?: {
+    timeRange?: string
+  }) => {
+    const response = await apiClient.get('/api/users/my-extractions', { params })
+    return response.data
   }
 }

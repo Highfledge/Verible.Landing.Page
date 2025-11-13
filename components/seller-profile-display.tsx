@@ -252,18 +252,23 @@ export function SellerProfileDisplay({ data, isLoggedIn }: SellerProfileDisplayP
   const veribleVerificationStatus = seller?.verificationStatus || "unverified"
   
   const lastSeen = marketplaceData.lastSeen || "Unknown"
-  const categories = marketplaceData.categories || []
-  const recommendations = scoringResult?.recommendations || []
-  const riskFactors = scoringResult?.riskFactors || []
+  // Ensure arrays are actually arrays and handle null/undefined
+  const categories = Array.isArray(marketplaceData.categories) ? marketplaceData.categories : []
+  const recommendations = Array.isArray(scoringResult?.recommendations) ? scoringResult?.recommendations : []
+  const riskFactors = Array.isArray(scoringResult?.riskFactors) ? scoringResult?.riskFactors : []
   const trustIndicators = scoringResult?.trustIndicators || {}
   const sellerTrustIndicators = seller?.trustIndicators || extractedData?.trustIndicators || {}
   const scoringFactors = seller?.scoringFactors || {}
   
-  // Our platform data
-  const recentListings = seller?.recentListings || extractedData?.recentListings || []
-  const listingHistory = seller?.listingHistory || []
-  const flags = seller?.flags || []
-  const endorsements = seller?.endorsements || []
+  // Our platform data - ensure arrays are actually arrays
+  const recentListings = Array.isArray(seller?.recentListings) 
+    ? seller.recentListings 
+    : Array.isArray(extractedData?.recentListings) 
+    ? extractedData.recentListings 
+    : []
+  const listingHistory = Array.isArray(seller?.listingHistory) ? seller.listingHistory : []
+  const flags = Array.isArray(seller?.flags) ? seller.flags : []
+  const endorsements = Array.isArray(seller?.endorsements) ? seller.endorsements : []
   const platform = extractedData?.platform || seller?.platform || "unknown"
   const lastScored = seller?.lastScored
   const isActive = seller?.isActive ?? true
@@ -592,24 +597,57 @@ export function SellerProfileDisplay({ data, isLoggedIn }: SellerProfileDisplayP
           </div>
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
             {Object.entries(scoringFactors).map(([key, value]) => {
-              const score = typeof value === 'number' ? value : 0
+              // Handle nested object structure (score, available, breakdown) or direct number
+              let score: number = 0
+              let isAvailable: boolean = true
+              let breakdown: any = null
+              
+              if (typeof value === 'number') {
+                score = value
+              } else if (typeof value === 'object' && value !== null) {
+                score = typeof value.score === 'number' ? value.score : 0
+                isAvailable = typeof value.available === 'boolean' ? value.available : true
+                breakdown = value.breakdown || null
+              }
+              
               const label = key.replace(/([A-Z])/g, ' $1').trim()
+              
               return (
                 <div key={key} className="bg-gray-50 rounded-lg p-4">
                   <div className="flex items-center justify-between mb-2">
                     <span className="text-sm font-medium text-gray-700">{label}</span>
-                    <span className="text-sm font-bold text-gray-900">{score}</span>
+                    <div className="flex items-center gap-2">
+                      {!isAvailable && (
+                        <Badge variant="outline" className="text-xs text-gray-500">
+                          N/A
+                        </Badge>
+                      )}
+                      {isAvailable && (
+                        <span className="text-sm font-bold text-gray-900">
+                          {score !== null && score !== undefined ? score : 'N/A'}
+                        </span>
+                      )}
+                    </div>
                   </div>
-                  <div className="w-full bg-gray-200 rounded-full h-2">
-                    <div
-                      className={`h-2 rounded-full transition-all ${
-                        score >= 80 ? 'bg-green-500' :
-                        score >= 60 ? 'bg-yellow-500' :
-                        score >= 40 ? 'bg-orange-500' : 'bg-red-500'
-                      }`}
-                      style={{ width: `${Math.min(score, 100)}%` }}
-                    />
-                  </div>
+                  {isAvailable && score !== null && score !== undefined && (
+                    <div className="w-full bg-gray-200 rounded-full h-2">
+                      <div
+                        className={`h-2 rounded-full transition-all ${
+                          score >= 80 ? 'bg-green-500' :
+                          score >= 60 ? 'bg-yellow-500' :
+                          score >= 40 ? 'bg-orange-500' : 'bg-red-500'
+                        }`}
+                        style={{ width: `${Math.min(Math.max(score, 0), 100)}%` }}
+                      />
+                    </div>
+                  )}
+                  {!isAvailable && breakdown && (
+                    <p className="text-xs text-gray-500 mt-1">
+                      {typeof breakdown === 'object' && breakdown.message 
+                        ? breakdown.message 
+                        : 'Data not available'}
+                    </p>
+                  )}
                 </div>
               )
             })}
@@ -747,11 +785,23 @@ export function SellerProfileDisplay({ data, isLoggedIn }: SellerProfileDisplayP
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
             {Object.entries(sellerTrustIndicators).map(([key, value]) => {
               const label = key.replace(/([A-Z])/g, ' $1').trim()
-              const displayValue = typeof value === 'boolean' 
-                ? (value ? "Yes" : "No") 
-                : typeof value === 'number' 
-                ? value.toString()
-                : String(value)
+              
+              // Handle different value types safely
+              let displayValue: string
+              if (value === null || value === undefined) {
+                displayValue = "N/A"
+              } else if (typeof value === 'boolean') {
+                displayValue = value ? "Yes" : "No"
+              } else if (typeof value === 'number') {
+                displayValue = value.toString()
+              } else if (typeof value === 'object') {
+                // If it's an object, try to extract a meaningful value or stringify safely
+                displayValue = JSON.stringify(value).length > 50 
+                  ? "See details" 
+                  : JSON.stringify(value)
+              } else {
+                displayValue = String(value)
+              }
               
               return (
                 <div key={key} className="bg-gray-50 rounded-lg p-4">
@@ -762,6 +812,8 @@ export function SellerProfileDisplay({ data, isLoggedIn }: SellerProfileDisplayP
                         ? 'text-green-600' 
                         : typeof value === 'boolean' && !value
                         ? 'text-red-600'
+                        : value === null || value === undefined
+                        ? 'text-gray-400'
                         : 'text-gray-900'
                     }`}>
                       {displayValue}
@@ -798,14 +850,26 @@ export function SellerProfileDisplay({ data, isLoggedIn }: SellerProfileDisplayP
                 <h3 className="text-sm font-medium text-gray-900 mb-3">Seller Categories</h3>
                 <div className="flex flex-wrap gap-2">
                   {categories.slice(0, 6).map((category: any, index: number) => {
-                    // Clean category name (remove markdown images)
-                    const cleanCategoryName = cleanText(category.name) || `Category ${index + 1}`
+                    // Handle both string and object formats
+                    let cleanCategoryName: string
+                    let categoryCount: number | null = null
+                    
+                    if (typeof category === 'string') {
+                      cleanCategoryName = cleanText(category) || `Category ${index + 1}`
+                    } else if (typeof category === 'object' && category !== null) {
+                      cleanCategoryName = cleanText(category.name || category.title || category.label || category) || `Category ${index + 1}`
+                      categoryCount = typeof category.count === 'number' ? category.count : null
+                    } else {
+                      cleanCategoryName = `Category ${index + 1}`
+                    }
+                    
                     if (!cleanCategoryName || cleanCategoryName.length > 50) return null
+                    
                     return (
                       <Badge key={index} variant="outline" className="text-xs py-1 px-3">
                         {cleanCategoryName}
-                        {category.count > 0 && (
-                          <span className="ml-1 text-gray-500">({category.count})</span>
+                        {categoryCount !== null && categoryCount > 0 && (
+                          <span className="ml-1 text-gray-500">({categoryCount})</span>
                         )}
                       </Badge>
                     )
@@ -825,32 +889,56 @@ export function SellerProfileDisplay({ data, isLoggedIn }: SellerProfileDisplayP
             Recommendations
           </h3>
           <div className="space-y-3">
-            {recommendations.map((rec: any, index: number) => (
-              <div
-                key={index}
-                className={`p-4 rounded-lg border-l-4 ${
-                  rec.type === 'positive'
-                    ? 'bg-green-50 border-green-500'
-                    : rec.type === 'warning'
-                    ? 'bg-yellow-50 border-yellow-500'
-                    : 'bg-red-50 border-red-500'
-                }`}
-              >
-                <div className="flex items-start space-x-3">
-                  {rec.type === 'positive' ? (
-                    <ThumbsUp className="w-5 h-5 text-green-600 mt-0.5 flex-shrink-0" />
-                  ) : (
-                    <AlertTriangle className="w-5 h-5 text-yellow-600 mt-0.5 flex-shrink-0" />
-                  )}
-                  <div className="flex-1">
-                    <p className="text-sm font-medium text-gray-900 mb-1">{rec.message}</p>
-                    {rec.action && (
-                      <p className="text-xs text-gray-600">{rec.action}</p>
+            {recommendations.map((rec: any, index: number) => {
+              // Handle both string and object formats
+              const recType = typeof rec === 'object' && rec !== null ? (rec.type || rec.priority || 'warning') : 'warning'
+              const recMessage = typeof rec === 'string' 
+                ? rec 
+                : rec?.message || rec?.text || rec?.description || 'Recommendation'
+              const recAction = typeof rec === 'object' && rec !== null ? rec?.action : null
+              const recPriority = typeof rec === 'object' && rec !== null ? rec?.priority : null
+              
+              return (
+                <div
+                  key={index}
+                  className={`p-4 rounded-lg border-l-4 ${
+                    recType === 'positive' || recType === 'success'
+                      ? 'bg-green-50 border-green-500'
+                      : recType === 'warning' || recType === 'medium'
+                      ? 'bg-yellow-50 border-yellow-500'
+                      : 'bg-red-50 border-red-500'
+                  }`}
+                >
+                  <div className="flex items-start space-x-3">
+                    {recType === 'positive' || recType === 'success' ? (
+                      <ThumbsUp className="w-5 h-5 text-green-600 mt-0.5 flex-shrink-0" />
+                    ) : (
+                      <AlertTriangle className="w-5 h-5 text-yellow-600 mt-0.5 flex-shrink-0" />
                     )}
+                    <div className="flex-1">
+                      <p className="text-sm font-medium text-gray-900 mb-1">{recMessage}</p>
+                      {recAction && (
+                        <p className="text-xs text-gray-600">{recAction}</p>
+                      )}
+                      {recPriority && (
+                        <Badge 
+                          variant="outline" 
+                          className={`text-xs mt-1 ${
+                            recPriority === 'high' 
+                              ? 'text-red-600 border-red-300' 
+                              : recPriority === 'medium'
+                              ? 'text-orange-600 border-orange-300'
+                              : 'text-blue-600 border-blue-300'
+                          }`}
+                        >
+                          {recPriority} priority
+                        </Badge>
+                      )}
+                    </div>
                   </div>
                 </div>
-              </div>
-            ))}
+              )
+            })}
           </div>
         </div>
       )}
@@ -862,13 +950,49 @@ export function SellerProfileDisplay({ data, isLoggedIn }: SellerProfileDisplayP
             <AlertTriangle className="w-5 h-5 mr-2 text-red-600" />
             Risk Factors
           </h3>
-          <div className="space-y-2">
-            {riskFactors.map((risk: string, index: number) => (
-              <div key={index} className="flex items-center space-x-2 text-red-700">
-                <XCircle className="w-4 h-4 flex-shrink-0" />
-                <span className="text-sm">{risk}</span>
-              </div>
-            ))}
+          <div className="space-y-3">
+            {riskFactors.map((risk: any, index: number) => {
+              // Handle both string and object formats
+              const riskText = typeof risk === 'string' 
+                ? risk 
+                : risk?.issue || risk?.message || risk?.description || 'Risk factor identified'
+              const riskCategory = typeof risk === 'object' ? risk?.category : null
+              const riskSeverity = typeof risk === 'object' ? risk?.severity : null
+              
+              return (
+                <div key={index} className="bg-white rounded-lg p-3 border border-red-200">
+                  <div className="flex items-start space-x-2 text-red-700">
+                    <XCircle className="w-4 h-4 flex-shrink-0 mt-0.5" />
+                    <div className="flex-1">
+                      <p className="text-sm font-medium">{riskText}</p>
+                      {(riskCategory || riskSeverity) && (
+                        <div className="flex items-center gap-2 mt-1">
+                          {riskCategory && (
+                            <Badge variant="outline" className="text-xs text-red-600 border-red-300">
+                              {riskCategory}
+                            </Badge>
+                          )}
+                          {riskSeverity && (
+                            <Badge 
+                              variant="outline" 
+                              className={`text-xs ${
+                                riskSeverity === 'high' 
+                                  ? 'text-red-700 border-red-400 bg-red-50' 
+                                  : riskSeverity === 'medium'
+                                  ? 'text-orange-700 border-orange-400 bg-orange-50'
+                                  : 'text-yellow-700 border-yellow-400 bg-yellow-50'
+                              }`}
+                            >
+                              {riskSeverity} severity
+                            </Badge>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              )
+            })}
           </div>
         </div>
       )}

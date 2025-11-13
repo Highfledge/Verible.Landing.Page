@@ -10,7 +10,7 @@ import { UserSettingsModal } from "@/components/user-dropdown/settings-modal"
 
 export function UserDropdown() {
   const router = useRouter()
-  const { user, logout, isLoggedIn, updateUser } = useAuth()
+  const { user, logout, isLoggedIn, updateUser, viewMode, toggleViewMode } = useAuth()
   const dropdownRef = useRef<HTMLDivElement>(null)
   const [uiState, setUIState] = useState({
     isDropdownOpen: false,
@@ -43,6 +43,11 @@ export function UserDropdown() {
 
   const handleBecomeSeller = () => {
     setUIState((prev) => ({ ...prev, isDropdownOpen: false, showBecomeSeller: true }))
+  }
+
+  const handleToggleView = () => {
+    toggleViewMode()
+    setUIState((prev) => ({ ...prev, isDropdownOpen: false }))
   }
 
   if (!isLoggedIn || !user) {
@@ -123,6 +128,16 @@ export function UserDropdown() {
               >
                 <Store className="w-4 h-4 text-green-500" />
                 <span>Become a Seller</span>
+              </button>
+            )}
+
+            {user.role === "seller" && (
+              <button
+                onClick={handleToggleView}
+                className="w-full px-4 py-2 text-left text-sm text-blue-600 hover:bg-blue-50 flex items-center space-x-3"
+              >
+                <Store className="w-4 h-4 text-blue-500" />
+                <span>{viewMode === 'seller' ? 'View as a Buyer' : 'View as a Seller'}</span>
               </button>
             )}
           </div>

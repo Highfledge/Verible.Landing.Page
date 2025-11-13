@@ -5,10 +5,11 @@ import { ArrowRight, Map } from "lucide-react"
 import { useAuth } from "@/lib/stores/auth-store"
 
 export function CTASection() {
-  const { isLoggedIn, user } = useAuth()
+  const { isLoggedIn, user, isSellerView } = useAuth()
   
-  // Only show for buyers or guests (not for sellers)
-  if (isLoggedIn && user?.role === "seller") {
+  // Only show for buyers or guests (not for sellers in seller view)
+  // Sellers can see this when viewing as buyer
+  if (isLoggedIn && user?.role === "seller" && isSellerView) {
     return null
   }
 
