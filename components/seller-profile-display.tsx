@@ -605,9 +605,11 @@ export function SellerProfileDisplay({ data, isLoggedIn }: SellerProfileDisplayP
               if (typeof value === 'number') {
                 score = value
               } else if (typeof value === 'object' && value !== null) {
-                score = typeof value.score === 'number' ? value.score : 0
-                isAvailable = typeof value.available === 'boolean' ? value.available : true
-                breakdown = value.breakdown || null
+                // Type guard: check if value has the expected properties
+                const valueObj = value as Record<string, any>
+                score = typeof valueObj.score === 'number' ? valueObj.score : 0
+                isAvailable = typeof valueObj.available === 'boolean' ? valueObj.available : true
+                breakdown = valueObj.breakdown || null
               }
               
               const label = key.replace(/([A-Z])/g, ' $1').trim()
