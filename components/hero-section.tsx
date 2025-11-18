@@ -433,38 +433,43 @@ export function HeroSection() {
               <Link2 className="w-5 h-5" />
               <span>Search by Profile URL</span>
             </Button>
-            <Button
-              onClick={() => {
-                updateSearchState({
-                  mode: "name-platform",
-                  profileUrl: "",
-                  selectedLocation: ""
-                })
-              }}
-              variant={searchMode === "name-platform" ? "primary" : "secondary"}
-              size="xl"
-              className={`flex items-center gap-2 px-6 py-3 ${
-                searchMode === "name-platform"
-                  ? "bg-purple-600 hover:bg-purple-700 text-white"
-                  : "bg-gray-800 hover:bg-gray-700 text-white border border-gray-700"
-              }`}
-            >
-              <User className="w-5 h-5" />
-              <span>Search by Name and Platform</span>
-            </Button>
-            <Button
-              onClick={() => updateSearchState({ mode: "name-platform-location" })}
-              variant={searchMode === "name-platform-location" ? "primary" : "secondary"}
-              size="xl"
-              className={`flex items-center gap-2 px-6 py-3 ${
-                searchMode === "name-platform-location"
-                  ? "bg-purple-600 hover:bg-purple-700 text-white"
-                  : "bg-gray-800 hover:bg-gray-700 text-white border border-gray-700"
-              }`}
-            >
-              <MapPin className="w-5 h-5" />
-              <span>Search by Name, Platform and Location</span>
-            </Button>
+            {/* Commented out when user is logged in */}
+            {!isLoggedIn && (
+              <>
+                <Button
+                  onClick={() => {
+                    updateSearchState({
+                      mode: "name-platform",
+                      profileUrl: "",
+                      selectedLocation: ""
+                    })
+                  }}
+                  variant={searchMode === "name-platform" ? "primary" : "secondary"}
+                  size="xl"
+                  className={`flex items-center gap-2 px-6 py-3 ${
+                    searchMode === "name-platform"
+                      ? "bg-purple-600 hover:bg-purple-700 text-white"
+                      : "bg-gray-800 hover:bg-gray-700 text-white border border-gray-700"
+                  }`}
+                >
+                  <User className="w-5 h-5" />
+                  <span>Search by Name and Platform</span>
+                </Button>
+                <Button
+                  onClick={() => updateSearchState({ mode: "name-platform-location" })}
+                  variant={searchMode === "name-platform-location" ? "primary" : "secondary"}
+                  size="xl"
+                  className={`flex items-center gap-2 px-6 py-3 ${
+                    searchMode === "name-platform-location"
+                      ? "bg-purple-600 hover:bg-purple-700 text-white"
+                      : "bg-gray-800 hover:bg-gray-700 text-white border border-gray-700"
+                  }`}
+                >
+                  <MapPin className="w-5 h-5" />
+                  <span>Search by Name, Platform and Location</span>
+                </Button>
+              </>
+            )}
           </div>
 
           {/* Dynamic Search Bar */}
@@ -949,15 +954,6 @@ export function HeroSection() {
 
             {/* CTA Buttons */}
             <div className="flex flex-col sm:flex-row gap-4">
-              {!isLoggedIn && (
-                <Button variant="primary" size="xl" className="flex items-center space-x-2 hover:shadow-lg transition-all duration-300" asChild>
-                  <a href="/auth?mode=signup">
-                    <span>Get Started</span>
-                    <ArrowRight className="w-5 h-5" />
-                  </a>
-                </Button>
-              )}
-              
               <Button variant="secondary" size="xl" className="flex items-center space-x-2 hover:shadow-lg transition-all duration-300" asChild>
                 <a 
                   href="https://chromewebstore.google.com/detail/mfpkpchpddnicfddlpfdnpcodfmeoiha?utm_source=item-share-cb" 
@@ -965,21 +961,23 @@ export function HeroSection() {
                   rel="noopener noreferrer"
                 >
                   <Download className="w-5 h-5" />
-                  <span>Download Extension</span>
+                  <span>Download chrome extension - it's free!</span>
+                </a>
+              </Button>
+              
+              <Button variant="primary" size="xl" className="flex items-center space-x-2 hover:shadow-lg transition-all duration-300" asChild>
+                <a href="/buyer-tools">
+                  <span>Verify a Seller</span>
+                  <ArrowRight className="w-5 h-5" />
                 </a>
               </Button>
             </div>
 
             {/* Stats */}
-            <div className="flex space-x-12 pt-8">
-              <div className="text-center">
-                <div className="text-3xl font-bold text-gray-900">100K+</div>
-                <div className="text-sm text-gray-600">Protected Users</div>
-              </div>
-              <div className="text-center">
-                <div className="text-3xl font-bold text-gray-900">50M+</div>
-                <div className="text-sm text-gray-600">Sellers Analyzed</div>
-              </div>
+            <div className="pt-8">
+              <p className="text-lg text-black leading-relaxed">
+                Built to protect 100M+ marketplace buyers and give credibility to 10M+ online sellers
+              </p>
             </div>
           </div>
 
