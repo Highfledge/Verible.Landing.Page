@@ -232,6 +232,18 @@ export const sellersAPI = {
     return response.data
   },
 
+  // Generate verification code for seller profile
+  generateVerificationCode: async (payload: { profileUrl: string }) => {
+    const response = await apiClient.post('/api/sellers/generate-verification-code', payload)
+    return response.data
+  },
+
+  // Verify seller profile
+  verifyProfile: async (payload: { profileUrl: string }) => {
+    const response = await apiClient.post('/api/sellers/verify-profile', payload)
+    return response.data
+  },
+
   // Get seller feedback (flags and endorsements)
   getSellerFeedback: async (sellerId: string) => {
     const response = await apiClient.get(`/api/sellers/${sellerId}/feedback`)
@@ -294,8 +306,73 @@ export const usersAPI = {
     offset?: number
     timeRange?: string
   }) => {
-    const response = await apiClient.get('/api/users/recent-activity', { params })
-    return response.data
+    try {
+      const response = await apiClient.get('/api/users/recent-activity', { params })
+      
+      // Handle successful response
+      if (response.data) {
+        return {
+          success: true,
+          data: response.data
+        }
+      }
+      
+      // If response exists but no data, return empty structure
+      return {
+        success: true,
+        data: {
+          activities: [],
+          summary: {
+            total: 0,
+            byType: {
+              extraction: 0,
+              flag: 0,
+              endorsement: 0
+            }
+          },
+          pagination: {
+            limit: params?.limit || 10,
+            returned: 0,
+            total: 0,
+            hasMore: false
+          },
+          timeRange: params?.timeRange || '30d'
+        }
+      }
+    } catch (error: any) {
+      // Handle network errors
+      if (!error.response) {
+        return {
+          success: false,
+          error: 'Network error. Please check your connection and try again.',
+          data: null
+        }
+      }
+      
+      // Handle API errors with status codes
+      const status = error.response?.status
+      const errorMessage = error.response?.data?.message || error.response?.data?.error || 'Failed to load recent activity'
+      
+      // Provide user-friendly messages based on status code
+      let userMessage = errorMessage
+      if (status === 401) {
+        userMessage = 'Please log in to view your recent activity'
+      } else if (status === 403) {
+        userMessage = 'You do not have permission to view recent activity'
+      } else if (status === 404) {
+        userMessage = 'Recent activity endpoint not found'
+      } else if (status === 500) {
+        userMessage = 'Server error. Please try again later'
+      } else if (status >= 500) {
+        userMessage = 'Service temporarily unavailable. Please try again later'
+      }
+      
+      return {
+        success: false,
+        error: userMessage,
+        data: null
+      }
+    }
   },
 
   // Get top threats
