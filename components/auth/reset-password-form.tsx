@@ -22,6 +22,7 @@ export function ResetPasswordForm() {
   const [resetSuccess, setResetSuccess] = useState(false)
 
   const token = searchParams.get("token")
+  const emailOrPhoneFromUrl = searchParams.get("email") || ""
 
   const form = useForm<ResetPasswordFormData>({
     resolver: zodResolver(resetPasswordSchema),
@@ -29,19 +30,29 @@ export function ResetPasswordForm() {
       resetToken: token || "",
       newPassword: "",
       confirmPassword: "",
-      emailOrPhone: "",
+      emailOrPhone: emailOrPhoneFromUrl,
     },
   })
 
   useEffect(() => {
-    if (!token) {
-      toast.error("Invalid or missing reset token")
-      router.push("/auth?mode=login")
+    if (emailOrPhoneFromUrl) {
+      form.setValue("emailOrPhone", emailOrPhoneFromUrl)
     }
-  }, [token, router])
+    if (token) {
+      form.setValue("resetToken", token)
+    }
+  }, [emailOrPhoneFromUrl, token, form])
 
   const onSubmit = async (data: ResetPasswordFormData) => {
-    if (!token) return
+    if (!data.resetToken) {
+      toast.error("Reset token is required")
+      return
+    }
+    
+    if (!data.emailOrPhone) {
+      toast.error("Email or phone number is required")
+      return
+    }
     
     setIsLoading(true)
     try {
@@ -56,7 +67,9 @@ export function ResetPasswordForm() {
       
       console.log("Reset password response:", response)
       
-      toast.success("Password reset successfully!")
+      // Use API response message if available, otherwise use default
+      const successMessage = response?.message || "Password reset successfully!"
+      toast.success(successMessage)
       setResetSuccess(true)
       
       // Redirect to login after a short delay
@@ -92,25 +105,6 @@ export function ResetPasswordForm() {
     )
   }
 
-  if (!token) {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-blue-50 flex items-center justify-center px-4 py-8">
-        <div className="w-full max-w-md">
-          <div className="bg-white rounded-2xl shadow-lg border border-gray-100 p-8 text-center">
-            <h2 className="text-2xl font-bold text-gray-900 mb-2">Invalid Reset Link</h2>
-            <p className="text-gray-600 mb-6">This password reset link is invalid or has expired.</p>
-            <Button 
-              onClick={() => router.push("/auth?mode=login")}
-              variant="primary" 
-              className="w-full"
-            >
-              Back to Login
-            </Button>
-          </div>
-        </div>
-      </div>
-    )
-  }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-blue-50 flex items-center justify-center px-4 py-8">
@@ -145,6 +139,30 @@ export function ResetPasswordForm() {
             e.preventDefault()
             form.handleSubmit(onSubmit)()
           }} className="space-y-6">
+            {/* Reset Token */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Reset Token
+              </label>
+              <div className="relative">
+                <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
+                <Input
+                  {...form.register("resetToken")}
+                  type="text"
+                  placeholder="Enter the reset token from your email"
+                  className="pl-10"
+                />
+              </div>
+              {form.formState.errors.resetToken && (
+                <p className="text-red-500 text-sm mt-1">
+                  {form.formState.errors.resetToken.message}
+                </p>
+              )}
+              <p className="text-xs text-gray-500 mt-1">
+                Check your email for the reset token
+              </p>
+            </div>
+
             {/* Email or Phone */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">

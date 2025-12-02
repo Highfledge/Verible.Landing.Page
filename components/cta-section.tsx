@@ -13,7 +13,7 @@ export function CTASection() {
   }
 
   return (
-    <section className="w-full px-6 py-20 bg-white">
+    <section className="w-full px-6 pb-20 bg-white">
       <div className="max-w-4xl mx-auto">
         <div className="bg-white rounded-2xl shadow-lg border border-gray-100 p-8 md:p-12 text-center">
           {/* Heading */}

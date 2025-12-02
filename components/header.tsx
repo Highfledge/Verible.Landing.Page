@@ -53,7 +53,7 @@ export function Header() {
             </>
           )}
           
-          {/* Access Dashboard (only when logged in) */}
+          {/* Access Dashboard (only when logged in)
           {isLoggedIn && (
             <Button
               variant="outline"
@@ -64,7 +64,7 @@ export function Header() {
               <BarChart3 className="w-4 h-4" />
               <span>Access dashboard</span>
             </Button>
-          )}
+          )} */}
 
           {/* Sign-up for free (only when not logged in) */}
           {!isLoggedIn && (

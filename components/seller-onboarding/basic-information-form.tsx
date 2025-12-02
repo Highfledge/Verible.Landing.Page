@@ -20,14 +20,14 @@ import { useAuth } from "@/lib/stores/auth-store"
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
 
 interface BasicInformationFormProps {
-  onComplete: () => void
+  onComplete: (data: BusinessInformationFormData) => void
 }
 
 const businessTypes = [
   "Individual Seller",
-  "Small Business",
-  "Corporation",
-  "Non-Profit",
+  "small business",
+  "corporation",
+  "non-profit",
 ]
 
 export function BasicInformationForm({ onComplete }: BasicInformationFormProps) {
@@ -40,7 +40,7 @@ export function BasicInformationForm({ onComplete }: BasicInformationFormProps) 
       businessName: "",
       contactEmail: user?.email || "",
       phoneNumber: "",
-      websiteUrl: "",
+      profileUrl: "",
       businessDescription: "",
       businessType: "Individual Seller",
     },
@@ -49,17 +49,12 @@ export function BasicInformationForm({ onComplete }: BasicInformationFormProps) 
   const onSubmit = async (data: BusinessInformationFormData) => {
     setIsLoading(true)
     try {
-      // TODO: Call API to save business information
+      // No API call at this step - just validate and pass data to next step
       console.log("Business Information:", data)
-      
-      // Simulate API call
-      await new Promise((resolve) => setTimeout(resolve, 1000))
-      
-      toast.success("Business information saved successfully!")
-      onComplete()
+      onComplete(data)
     } catch (error) {
-      console.error("Error saving business information:", error)
-      toast.error("Failed to save business information. Please try again.")
+      console.error("Error:", error)
+      toast.error("Please check your form and try again.")
     } finally {
       setIsLoading(false)
     }
@@ -133,7 +128,9 @@ export function BasicInformationForm({ onComplete }: BasicInformationFormProps) 
                 name="phoneNumber"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Phone Number</FormLabel>
+                    <FormLabel>
+                      Phone Number <span className="text-red-500">*</span>
+                    </FormLabel>
                     <FormControl>
                       <Input
                         type="tel"
@@ -147,22 +144,27 @@ export function BasicInformationForm({ onComplete }: BasicInformationFormProps) 
                 )}
               />
 
-              {/* Website URL */}
+              {/* Profile URL */}
               <FormField
                 control={form.control}
-                name="websiteUrl"
+                name="profileUrl"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Website URL</FormLabel>
+                    <FormLabel>
+                      Profile URL <span className="text-red-500">*</span>
+                    </FormLabel>
                     <FormControl>
                       <Input
                         type="url"
-                        placeholder="https://yourwebsite.com"
+                        placeholder="https://www.jiji.com/marketplace/profile/..."
                         {...field}
                         className="w-full"
                       />
                     </FormControl>
                     <FormMessage />
+                    <p className="text-xs text-gray-500 mt-1">
+                      Enter your marketplace seller profile URL
+                    </p>
                   </FormItem>
                 )}
               />
@@ -177,7 +179,9 @@ export function BasicInformationForm({ onComplete }: BasicInformationFormProps) 
                 name="businessType"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Business Type</FormLabel>
+                    <FormLabel>
+                      Business Type <span className="text-red-500">*</span>
+                    </FormLabel>
                     <Select
                       onValueChange={field.onChange}
                       defaultValue={field.value}
@@ -208,7 +212,9 @@ export function BasicInformationForm({ onComplete }: BasicInformationFormProps) 
                 name="businessDescription"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Business Description</FormLabel>
+                    <FormLabel>
+                      Business Description <span className="text-red-500">*</span>
+                    </FormLabel>
                     <FormControl>
                       <Textarea
                         placeholder="Describe your business, products, or services..."

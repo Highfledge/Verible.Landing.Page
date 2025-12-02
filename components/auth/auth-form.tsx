@@ -97,13 +97,9 @@ export function AuthForm({ mode }: AuthFormProps) {
         }
         toast.success("Account created successfully! Please verify your email.")
         
-        // Redirect to verification page with email/phone and verification code
+        // Redirect to verification page with email/phone only
         const emailOrPhone = signupData.email || signupData.phone
-        const verificationCode = response.data?.verificationCode || response.verificationCode
-        const verifyUrl = verificationCode 
-          ? `/verify?email=${encodeURIComponent(emailOrPhone)}&code=${encodeURIComponent(verificationCode)}`
-          : `/verify?email=${encodeURIComponent(emailOrPhone)}`
-        router.push(verifyUrl)
+        router.push(`/verify?email=${encodeURIComponent(emailOrPhone)}`)
       }
     } catch (error: any) {
       console.error("Auth error:", error)

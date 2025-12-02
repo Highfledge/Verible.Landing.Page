@@ -89,7 +89,7 @@ export const authAPI = {
     emailOrPhone: string
     method: string
   }) => {
-    const response = await apiClient.post('/auth/verify/resend', data)
+    const response = await apiClient.post('/api/auth/verify/resend', data)
     return response.data
   },
 
@@ -277,6 +277,22 @@ export const sellersAPI = {
   // Recalculate seller score
   recalculateScore: async (sellerId: string) => {
     const response = await apiClient.post(`/api/sellers/${sellerId}/recalculate-score`)
+    return response.data
+  },
+
+  // Onboard seller
+  onboard: async (payload: {
+    businessName: string
+    email: string
+    phone: string
+    password: string
+    profileUrl: string
+    businessType: string
+    businessDescription: string
+    platform: string
+    verificationMethod: string
+  }) => {
+    const response = await apiClient.post('/api/sellers/onboard', payload)
     return response.data
   }
 }

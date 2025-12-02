@@ -171,39 +171,18 @@ export function BuyerToolsPage() {
 
             {/* Navigation */}
             <nav className="hidden md:flex items-center space-x-8">
-              <Link href="#" className="text-gray-600 hover:text-gray-900 font-medium">Platform</Link>
-              <div className="relative" ref={languageRef}>
-                <button 
-                  onClick={() => setLanguageDropdownOpen(!languageDropdownOpen)}
-                  className="text-gray-600 hover:text-gray-900 font-medium flex items-center space-x-1"
-                >
-                  <Globe className="w-4 h-4" />
-                  <span>{selectedLanguageData?.code}</span>
-                  <ChevronDown className={`w-4 h-4 transition-transform ${languageDropdownOpen ? 'rotate-180' : ''}`} />
-                </button>
-                
-                {languageDropdownOpen && (
-                  <div className="absolute top-full right-0 mt-2 w-48 bg-white border border-gray-200 rounded-lg shadow-lg z-50 max-h-80 overflow-y-auto">
-                    {languages.map((lang) => (
-                      <button
-                        key={lang.code}
-                        onClick={() => {
-                          setSelectedLanguage(lang.code)
-                          setLanguageDropdownOpen(false)
-                        }}
-                        className={`w-full px-4 py-2 text-left hover:bg-blue-50 flex items-center justify-between ${
-                          selectedLanguage === lang.code ? 'bg-blue-50' : ''
-                        }`}
-                      >
-                        <span className="text-sm text-gray-700">{lang.label}</span>
-                        {selectedLanguage === lang.code && (
-                          <Check className="w-4 h-4 text-blue-600" />
-                        )}
-                      </button>
-                    ))}
-                  </div>
-                )}
-              </div>
+              <Link 
+                href="/#how-it-works" 
+                className="text-gray-600 hover:text-gray-900 font-medium transition-colors"
+              >
+                How it works
+              </Link>
+              <Link 
+                href="/seller-onboarding" 
+                className="text-gray-600 hover:text-gray-900 font-medium transition-colors"
+              >
+                Sellers
+              </Link>
               <UserDropdown />
             </nav>
         </div>
@@ -214,10 +193,11 @@ export function BuyerToolsPage() {
         <div className="max-w-4xl mx-auto">
           {/* Home Icon - Top Left */}
           <div className="mb-6">
-            <Link href="/" className="inline-block hover:opacity-80 transition-opacity">
-              <svg className="w-6 h-6 text-gray-600 hover:text-gray-900" fill="currentColor" viewBox="0 0 20 20">
+            <Link href="/" className="inline-flex items-center space-x-2 text-gray-600 hover:text-gray-900 transition-colors">
+              <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 20 20">
                 <path d="M10.707 2.293a1 1 0 00-1.414 0l-7 7a1 1 0 001.414 1.414L4 10.414V17a1 1 0 001 1h2a1 1 0 001-1v-2a1 1 0 011-1h2a1 1 0 011 1v2a1 1 0 001 1h2a1 1 0 001-1v-6.586l.293.293a1 1 0 001.414-1.414l-7-7z" />
               </svg>
+              <span className="font-medium">Home</span>
             </Link>
           </div>
 
@@ -235,18 +215,18 @@ export function BuyerToolsPage() {
               </div>
               <div className="flex-1">
                 <div className="flex items-center space-x-3 mb-2">
-                  <h2 className="text-2xl font-bold text-gray-900">MVP: Jiji Marketplace Focus</h2>
+                  <h2 className="text-2xl font-bold text-gray-900">MVP: Multi-Platform Support</h2>
                   <Badge variant="success" className="text-sm px-3 py-1">LIVE NOW</Badge>
-                  <span className="text-gray-600">• Single Platform Strategy</span>
+                  <span className="text-gray-600">• 6 Platforms Available</span>
                 </div>
                 <p className="text-gray-700 mb-6 leading-relaxed">
-                  We're starting with Jiji Marketplace to perfect our trust scoring algorithm. This focused approach ensures reliable, accurate results before expanding to other platforms.
+                  Our MVP now supports seller verification across 6 major marketplaces: Jiji, Konga, Kijiji, Jumia, Etsy, and eBay. Get instant trust scores and detailed seller analysis on these platforms.
                 </p>
-                <div className="flex justify-end">
+                {/* <div className="flex justify-end">
                   <Button variant="outline" className="border-green-500 text-green-600 hover:bg-green-50">
                     View Roadmap →
                   </Button>
-                </div>
+                </div> */}
               </div>
             </div>
           </div>

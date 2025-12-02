@@ -4,11 +4,12 @@ import { useState } from "react"
 import { ProgressTracker } from "./progress-tracker"
 import { BasicInformationForm } from "./basic-information-form"
 import { PlatformProfilesForm } from "./platform-profiles-form"
-import { IdentityVerificationForm } from "./identity-verification-form"
 import { ProfileReviewForm } from "./profile-review-form"
+import type { BusinessInformationFormData } from "@/lib/schemas"
 
 export function SellerOnboardingContent() {
   const [currentStep, setCurrentStep] = useState<number>(1)
+  const [basicInfoData, setBasicInfoData] = useState<BusinessInformationFormData | null>(null)
 
   const getStepStatus = (stepId: number): "completed" | "current" | "pending" | "error" => {
     if (stepId < currentStep) return "completed"
@@ -19,17 +20,15 @@ export function SellerOnboardingContent() {
   const steps = [
     { id: 1, label: "Basic Information", status: getStepStatus(1) },
     { id: 2, label: "Platform Profiles", status: getStepStatus(2) },
-    { id: 3, label: "Identity Verification", status: getStepStatus(3) },
-    { id: 4, label: "Profile Review", status: getStepStatus(4) },
+    { id: 3, label: "Profile Review", status: getStepStatus(3) },
   ]
 
-  const handleStepComplete = (stepId: number) => {
-    if (stepId === 1) {
+  const handleStepComplete = (stepId: number, data?: BusinessInformationFormData) => {
+    if (stepId === 1 && data) {
+      setBasicInfoData(data)
       setCurrentStep(2)
     } else if (stepId === 2) {
       setCurrentStep(3)
-    } else if (stepId === 3) {
-      setCurrentStep(4)
     }
   }
 
@@ -48,21 +47,16 @@ export function SellerOnboardingContent() {
         {/* Step Content */}
         <div className="mt-8">
           {currentStep === 1 && (
-            <BasicInformationForm onComplete={() => handleStepComplete(1)} />
+            <BasicInformationForm onComplete={(data) => handleStepComplete(1, data)} />
           )}
-          {currentStep === 2 && (
+          {currentStep === 2 && basicInfoData && (
             <PlatformProfilesForm
+              basicInfoData={basicInfoData}
               onBack={handleStepBack}
               onComplete={() => handleStepComplete(2)}
             />
           )}
           {currentStep === 3 && (
-            <IdentityVerificationForm
-              onBack={handleStepBack}
-              onComplete={() => handleStepComplete(3)}
-            />
-          )}
-          {currentStep === 4 && (
             <ProfileReviewForm onBack={handleStepBack} />
           )}
         </div>
@@ -70,4 +64,3 @@ export function SellerOnboardingContent() {
     </div>
   )
 }
-
