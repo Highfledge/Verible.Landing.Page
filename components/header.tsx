@@ -1,5 +1,6 @@
 "use client"
 
+import { useState } from "react"
 import Image from "next/image"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
@@ -7,10 +8,12 @@ import { UserDropdown } from "@/components/user-dropdown"
 import { useAuth } from "@/lib/stores/auth-store"
 import { Button } from "@/components/ui/button"
 import { BarChart3 } from "lucide-react"
+import { HowItWorksModal } from "@/components/how-it-works-modal"
 
 export function Header() {
   const router = useRouter()
   const { isLoggedIn } = useAuth()
+  const [showHowItWorks, setShowHowItWorks] = useState(false)
 
   return (
     <header className="w-full px-6 py-4 bg-white border-b border-gray-100">
@@ -32,12 +35,12 @@ export function Header() {
           {/* Navigation links (only when not logged in) */}
           {!isLoggedIn && (
             <>
-              <Link 
-                href="#how-it-works" 
+              <button
+                onClick={() => setShowHowItWorks(true)}
                 className="text-sm font-medium text-gray-700 hover:text-gray-900 transition-colors"
               >
                 How it works
-              </Link>
+              </button>
               <Link 
                 href="/buyer-tools" 
                 className="text-sm font-medium text-gray-700 hover:text-gray-900 transition-colors"
@@ -95,6 +98,8 @@ export function Header() {
           )}
         </div>
       </div>
+
+      <HowItWorksModal open={showHowItWorks} onOpenChange={setShowHowItWorks} />
     </header>
   )
 }

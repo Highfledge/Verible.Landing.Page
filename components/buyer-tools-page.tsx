@@ -13,6 +13,7 @@ import { useAuth } from "@/lib/stores/auth-store"
 import { sellersAPI } from "@/lib/api/client"
 import { toast } from "sonner"
 import { cleanObjectData } from "@/lib/utils/clean-data"
+import { HowItWorksModal } from "@/components/how-it-works-modal"
 
 const platforms = [
   { value: "all", label: "All Platforms", status: "" },
@@ -48,6 +49,7 @@ const languages = [
 export function BuyerToolsPage() {
   const { isLoggedIn } = useAuth()
   const [selectedPlatform, setSelectedPlatform] = useState("all")
+  const [showHowItWorks, setShowHowItWorks] = useState(false)
   const [selectedLanguage, setSelectedLanguage] = useState("US")
   const [platformDropdownOpen, setPlatformDropdownOpen] = useState(false)
   const [languageDropdownOpen, setLanguageDropdownOpen] = useState(false)
@@ -171,12 +173,12 @@ export function BuyerToolsPage() {
 
             {/* Navigation */}
             <nav className="hidden md:flex items-center space-x-8">
-              <Link 
-                href="/#how-it-works" 
+              <button
+                onClick={() => setShowHowItWorks(true)}
                 className="text-gray-600 hover:text-gray-900 font-medium transition-colors"
               >
                 How it works
-              </Link>
+              </button>
               <Link 
                 href="/seller-onboarding" 
                 className="text-gray-600 hover:text-gray-900 font-medium transition-colors"
@@ -399,6 +401,8 @@ export function BuyerToolsPage() {
           </div>
         </div>
       </main>
+
+      <HowItWorksModal open={showHowItWorks} onOpenChange={setShowHowItWorks} />
     </div>
   )
 }
