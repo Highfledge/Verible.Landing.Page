@@ -1,3 +1,11 @@
+> 🧭 **Documentation Standard**
+> Every pull request must include updates to the relevant files:
+> - `README.md`
+> - `CHANGELOG.md`
+> - `/docs/*`
+> 
+> See [CONTRIBUTING.md](CONTRIBUTING.md) for full details.
+
 This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
 
 ## Getting Started
