@@ -222,7 +222,7 @@ export function BuyerToolsPage() {
                   <span className="text-gray-600">• 6 Platforms Available</span>
                 </div>
                 <p className="text-gray-700 mb-6 leading-relaxed">
-                  Our MVP now supports seller verification across 6 major marketplaces: Jiji, Konga, Kijiji, Jumia, Etsy, and eBay. Get instant trust scores and detailed seller analysis on these platforms.
+                  Our MVP now supports seller verification across 6 major marketplaces: Jiji, Konga, Kijiji, Jumia, Etsy, and eBay. Get instant trust scores and detailed seller analysis on all of these platforms.
                 </p>
                 {/* <div className="flex justify-end">
                   <Button variant="outline" className="border-green-500 text-green-600 hover:bg-green-50">
