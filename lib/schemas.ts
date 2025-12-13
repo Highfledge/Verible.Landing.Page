@@ -67,15 +67,12 @@ export const businessInformationSchema = z.object({
   contactEmail: z.string().email("Please enter a valid email address"),
   phoneNumber: z.string()
     .min(10, "Phone number must be at least 10 digits")
-    .regex(/^\+?[\d\s\-\(\)]+$/, "Please enter a valid phone number")
-    .optional()
-    .or(z.literal("")),
-  websiteUrl: z.string()
-    .url("Please enter a valid URL")
-    .optional()
-    .or(z.literal("")),
-  businessDescription: z.string().optional(),
-  businessType: z.enum(["Individual Seller", "Small Business", "Corporation", "Non-Profit"], {
+    .regex(/^\+?[\d\s\-\(\)]+$/, "Please enter a valid phone number"),
+  profileUrl: z.string()
+    .url("Please enter a valid profile URL")
+    .min(1, "Profile URL is required"),
+  businessDescription: z.string().min(1, "Business description is required"),
+  businessType: z.enum(["Individual Seller", "small business", "corporation", "non-profit"], {
     message: "Please select a business type"
   }),
 })

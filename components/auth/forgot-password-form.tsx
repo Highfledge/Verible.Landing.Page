@@ -16,7 +16,6 @@ import { toast } from "sonner"
 export function ForgotPasswordForm() {
   const router = useRouter()
   const [isLoading, setIsLoading] = useState(false)
-  const [emailSent, setEmailSent] = useState(false)
 
   const form = useForm<ForgotPasswordFormData>({
     resolver: zodResolver(forgotPasswordSchema),
@@ -40,7 +39,9 @@ export function ForgotPasswordForm() {
       console.log("Forgot password response:", response)
       
       toast.success("Password reset instructions sent to your email!")
-      setEmailSent(true)
+      
+      // Redirect to reset-password page with emailOrPhone
+      router.push(`/reset-password?email=${encodeURIComponent(data.emailOrPhone)}`)
       
     } catch (error: any) {
       console.error("Forgot password error:", error)
@@ -49,55 +50,6 @@ export function ForgotPasswordForm() {
     } finally {
       setIsLoading(false)
     }
-  }
-
-  if (emailSent) {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-blue-50 flex items-center justify-center px-4 py-8">
-        <div className="w-full max-w-md">
-          {/* Back to Login Link */}
-          <Link href="/auth?mode=login" className="inline-flex items-center text-sm text-gray-600 hover:text-gray-900 mb-8">
-            <ArrowLeft className="w-4 h-4 mr-2" />
-            Back to Login
-          </Link>
-
-          {/* Success Message */}
-          <div className="bg-white rounded-2xl shadow-lg border border-gray-100 p-8 text-center">
-            <div className="flex justify-center mb-4">
-              <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center">
-                <CheckCircle2 className="w-8 h-8 text-green-600" />
-              </div>
-            </div>
-            <h2 className="text-2xl font-bold text-gray-900 mb-2">Check Your Email</h2>
-            <p className="text-gray-600 mb-6">
-              We've sent password reset instructions to{" "}
-              <span className="font-semibold text-gray-900">
-                {form.getValues("emailOrPhone")}
-              </span>
-            </p>
-            <p className="text-sm text-gray-500 mb-6">
-              Please check your email and follow the instructions to reset your password.
-            </p>
-            <div className="space-y-3">
-              <Button 
-                onClick={() => setEmailSent(false)}
-                variant="outline" 
-                className="w-full"
-              >
-                Send Another Email
-              </Button>
-              <Button 
-                onClick={() => router.push("/auth?mode=login")}
-                variant="primary" 
-                className="w-full"
-              >
-                Back to Login
-              </Button>
-            </div>
-          </div>
-        </div>
-      </div>
-    )
   }
 
   return (
