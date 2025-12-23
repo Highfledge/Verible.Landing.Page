@@ -248,8 +248,8 @@ export function SellerProfileDisplay({ data, isLoggedIn }: SellerProfileDisplayP
   const accountAge = marketplaceData.accountAge || 0
   
   // Platform verification (marketplace) vs Verible verification (our platform)
-  const marketplaceVerificationStatus = marketplaceData.verificationStatus || "unverified"
-  const veribleVerificationStatus = seller?.verificationStatus || "unverified"
+  const marketplaceVerificationStatus = marketplaceData.verificationStatus;
+  const veribleVerificationStatus = seller?.verificationStatus;
   
   const lastSeen = marketplaceData.lastSeen || "Unknown"
   // Ensure arrays are actually arrays and handle null/undefined
