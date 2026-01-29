@@ -155,13 +155,13 @@ export function SellersSection() {
         
         setAllSellers(uniqueSellers)
       } else {
-        console.error("Invalid API response structure:", response)
-        toast.error("Invalid response from server")
+        // console.error("Invalid API response structure:", response)
+        // toast.error("Invalid response from server")
         setAllSellers([])
       }
     } catch (error: any) {
-      console.error("Error loading sellers:", error)
-      toast.error(error.response?.data?.message || error.message || "Failed to load sellers. Please try again.")
+      // console.error("Error loading sellers:", error)
+      // toast.error(error.response?.data?.message || error.message || "Failed to load sellers. Please try again.")
       setAllSellers([])
     } finally {
       setIsLoading(false)
@@ -239,11 +239,12 @@ export function SellersSection() {
         setSelectedSellerData(normalized)
         setShowSellerModal(true)
       } else {
-        toast.error(response.message || "Failed to load seller details")
+        // toast.error(response.message || "Failed to load seller details")
+        return
       }
     } catch (error: any) {
-      console.error("Error loading seller details:", error)
-      toast.error(error.response?.data?.message || "Failed to load seller details. Please try again.")
+      // console.error("Error loading seller details:", error)
+      // toast.error(error.response?.data?.message || "Failed to load seller details. Please try again.")
     } finally {
       setIsLoadingSeller(false)
     }

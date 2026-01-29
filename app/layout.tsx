@@ -18,14 +18,6 @@ export const metadata: Metadata = {
   description: "Instant marketplace seller verification and trust scores for safer transactions. Say goodbye to scams, hello to safe shopping.",
   keywords: "marketplace, trust, verification, seller, safety, shopping, scam protection",
   authors: [{ name: "Verible" }],
-  manifest: "/manifest.json",
-  themeColor: "#1D2973",
-  viewport: "width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no",
-  appleWebApp: {
-    capable: true,
-    statusBarStyle: "default",
-    title: "Verible",
-  },
   openGraph: {
     title: "Verible - Shop with Confidence Safely",
     description: "Instant marketplace seller verification and trust scores for safer transactions.",
@@ -40,9 +32,6 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <head>
-        <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
-      </head>
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
