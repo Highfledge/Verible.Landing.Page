@@ -387,7 +387,7 @@ export function HeroSection() {
               Verified Sellers in the Marketplace
             </h1>
             <p className="text-xl lg:text-2xl text-purple-100 max-w-3xl mx-auto leading-relaxed">
-              Search {265} verified seller profiles available across platforms. Shop with confidence - verify sellers before you buy.
+              Search verified seller profiles available across platforms. Shop with confidence - verify sellers before you buy.
             </p>
           </div>
 
@@ -408,7 +408,7 @@ export function HeroSection() {
                 <Star key={i} className="w-5 h-5 text-yellow-400 fill-yellow-400" />
               ))}
             </div>
-            <span className="text-purple-100 text-sm lg:text-base">Trusted by 10,000+ buyers</span>
+            <span className="text-purple-100 text-sm lg:text-base">Built to be trusted by buyers</span>
           </div>
 
           {/* Search Mode Buttons */}
@@ -884,7 +884,7 @@ export function HeroSection() {
                 <Star key={i} className="w-5 h-5 text-yellow-400 fill-yellow-400" />
               ))}
             </div>
-            <span className="text-purple-100 text-sm lg:text-base">Trusted by 5,000+ sellers</span>
+            <span className="text-purple-100 text-sm lg:text-base">Trusted by sellers</span>
           </div>
         </div>
 
@@ -976,7 +976,7 @@ export function HeroSection() {
             {/* Stats */}
             <div className="pt-8">
               <p className="text-lg text-black leading-relaxed">
-                Built to protect 100M+ marketplace buyers and give credibility to 10M+ online sellers
+                Built to protect marketplace buyers and give credibility to online sellers
               </p>
             </div>
           </div>
@@ -1027,7 +1027,7 @@ export function HeroSection() {
                           </div>
                           <span className="font-semibold text-gray-900">TechnovationStore</span>
                         </div>
-                        <span className="text-xs text-gray-500">Facebook Marketplace</span>
+                        <span className="text-xs text-gray-500">Jiji Marketplace</span>
                       </div>
                       
                       <div className="mb-3">
@@ -1050,7 +1050,7 @@ export function HeroSection() {
                               <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
                             </svg>
                           </div>
-                          <span className="text-gray-700">5000+ Positive Reviews</span>
+                          <span className="text-gray-700">Positive Reviews</span>
                         </div>
                         <div className="flex items-center space-x-2 text-sm">
                           <div className="w-4 h-4 bg-green-500 rounded-full flex items-center justify-center">
@@ -1058,7 +1058,7 @@ export function HeroSection() {
                               <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
                             </svg>
                           </div>
-                          <span className="text-gray-700">Active for 4+ years</span>
+                          <span className="text-gray-700">Active</span>
                         </div>
                       </div>
                     </div>
@@ -1074,7 +1074,7 @@ export function HeroSection() {
                           </div>
                           <span className="font-semibold text-gray-900">QuickDeals99</span>
                         </div>
-                        <span className="text-xs text-gray-500">Facebook Marketplace</span>
+                        <span className="text-xs text-gray-500">Konga Marketplace</span>
                       </div>
                       
                       <div className="mb-3">

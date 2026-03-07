@@ -437,7 +437,7 @@ export function AuthForm({ mode }: AuthFormProps) {
                       />
                       <span className="ml-3 text-sm text-gray-700">Email</span>
                     </label>
-                    <label className="flex items-center">
+                    {/* <label className="flex items-center">
                       <input
                         {...signupForm.register("verificationMethod")}
                         type="radio"
@@ -445,7 +445,7 @@ export function AuthForm({ mode }: AuthFormProps) {
                         className="w-4 h-4 text-blue-600 border-gray-300 focus:ring-blue-500"
                       />
                       <span className="ml-3 text-sm text-gray-700">SMS</span>
-                    </label>
+                    </label> */}
                   </div>
                   {signupForm.formState.errors.verificationMethod && (
                     <p className="text-red-500 text-sm mt-1">

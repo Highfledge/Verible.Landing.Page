@@ -408,3 +408,48 @@ export const usersAPI = {
     return response.data
   }
 }
+
+// Analytics API functions
+export const analyticsAPI = {
+  // Get analytics overview
+  getOverview: async () => {
+    const response = await apiClient.get('/api/analytics/overview')
+    return response.data
+  },
+
+  // Get trust distribution
+  getTrustDistribution: async () => {
+    const response = await apiClient.get('/api/analytics/trust-distribution')
+    return response.data
+  },
+
+  // Get platform coverage
+  getPlatformCoverage: async () => {
+    const response = await apiClient.get('/api/analytics/platform-coverage')
+    return response.data
+  },
+
+  // Get platform performance
+  getPlatformPerformance: async () => {
+    const response = await apiClient.get('/api/analytics/platform-performance')
+    return response.data
+  },
+
+  // Get scoring criteria
+  getScoringCriteria: async () => {
+    const response = await apiClient.get('/api/analytics/scoring-criteria')
+    return response.data
+  },
+
+  // Get platform summary
+  getPlatformSummary: async () => {
+    const response = await apiClient.get('/api/analytics/platform-summary')
+    return response.data
+  },
+
+  // Get trust ecosystem metrics
+  getTrustEcosystem: async () => {
+    const response = await apiClient.get('/api/analytics/trust-ecosystem')
+    return response.data
+  }
+}

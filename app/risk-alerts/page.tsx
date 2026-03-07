@@ -13,9 +13,7 @@ import {
   Clock,
   User,
   Loader2,
-  TrendingUp,
-  ExternalLink
-} from "lucide-react"
+  TrendingUp} from "lucide-react"
 import { Header } from "@/components/header"
 import { StickyBottomBar } from "@/components/sticky-bottom-bar"
 import { usersAPI } from "@/lib/api/client"

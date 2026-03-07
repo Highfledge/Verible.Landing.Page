@@ -56,7 +56,7 @@ export function StickyBottomBar() {
                 <span className="text-xs text-white font-medium">Buyer Tools</span>
               </Link>
               
-              <Link
+              {/* <Link
                 href="/analytics"
                 className={`flex flex-col items-center space-y-1 px-3 py-1 rounded-lg transition-colors ${
                   pathname === "/analytics" ? "bg-white/20" : "hover:bg-white/10"
@@ -64,7 +64,7 @@ export function StickyBottomBar() {
               >
                 <BarChart3 className="w-5 h-5 text-white" />
                 <span className="text-xs text-white font-medium">Analytics</span>
-              </Link>
+              </Link> */}
               
               <button
                 onClick={(e) => {

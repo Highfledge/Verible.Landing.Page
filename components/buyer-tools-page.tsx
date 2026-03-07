@@ -17,18 +17,12 @@ import { HowItWorksModal } from "@/components/how-it-works-modal"
 
 const platforms = [
   { value: "all", label: "All Platforms", status: "" },
-  { value: "facebook", label: "Facebook Marketplace", status: "LIVE", live: true },
   { value: "jiji", label: "Jiji", status: "LIVE", live: true },
   { value: "ebay", label: "eBay", status: "LIVE", live: true },
   { value: "etsy", label: "Etsy", status: "LIVE", live: true },
   { value: "jumia", label: "Jumia", status: "LIVE", live: true },
   { value: "kijiji", label: "Kijiji", status: "LIVE", live: true },
   { value: "konga", label: "Konga", status: "LIVE", live: true },
-  { value: "amazon", label: "Amazon", status: "Planned" },
-  { value: "aliexpress", label: "AliExpress", status: "Planned" },
-  { value: "instagram", label: "Instagram Shopping", status: "Planned" },
-  { value: "tiktok", label: "TikTok Shops", status: "Planned" },
-  { value: "shopify", label: "Shopify", status: "Planned" },
 ]
 
 const languages = [
@@ -219,10 +213,10 @@ export function BuyerToolsPage() {
                 <div className="flex items-center space-x-3 mb-2">
                   <h2 className="text-2xl font-bold text-gray-900">MVP: Multi-Platform Support</h2>
                   <Badge variant="success" className="text-sm px-3 py-1">LIVE NOW</Badge>
-                  <span className="text-gray-600">• 6 Platforms Available</span>
+                  <span className="text-gray-600">• {platforms.filter(p => p.live).length} Platforms Available</span>
                 </div>
                 <p className="text-gray-700 mb-6 leading-relaxed">
-                  Our MVP now supports seller verification across 6 major marketplaces: Jiji, Konga, Kijiji, Jumia, Etsy, and eBay. Get instant trust scores and detailed seller analysis on all of these platforms.
+                  Our MVP now supports seller verification across {platforms.filter(p => p.live).length} major marketplaces: {platforms.filter(p => p.live).map(p => p.label).join(', ')}. Get instant trust scores and detailed seller analysis on all of these platforms.
                 </p>
                 {/* <div className="flex justify-end">
                   <Button variant="outline" className="border-green-500 text-green-600 hover:bg-green-50">
@@ -395,7 +389,7 @@ export function BuyerToolsPage() {
                   <Phone className="w-6 h-6 text-blue-600" />
                 </div>
                 <h3 className="font-semibold text-gray-900 mb-1">Phone Support</h3>
-                <p className="text-sm text-gray-600">+1 (555) 123-4567</p>
+                <p className="text-sm text-gray-600">Coming Soon</p>
               </div>
             </div>
           </div>

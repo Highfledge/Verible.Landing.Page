@@ -9,7 +9,6 @@ import { RecentActivity } from "@/components/recent-activity"
 import { usersAPI } from "@/lib/api/client"
 import { useAuth } from "@/lib/stores/auth-store"
 import { cleanText } from "@/lib/utils/clean-data"
-import { toast } from "sonner"
 import Link from "next/link"
 import { cn } from "@/lib/utils"
 
@@ -35,8 +34,6 @@ const supportedPlatforms = [
   "Amazon",
   "eBay",
   "Etsy",
-  "AliExpress",
-  "Facebook Marketplace",
 ]
 
 // Threat interface matching API response

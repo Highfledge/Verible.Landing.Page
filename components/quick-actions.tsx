@@ -512,12 +512,12 @@ export function QuickActions() {
       color: "bg-green-500 hover:bg-green-600",
       onClick: () => router.push("/seller-onboarding")
     },
-    {
-      label: "Analytics",
-      icon: BarChart3,
-      color: "bg-purple-500 hover:bg-purple-600",
-      onClick: () => router.push("/analytics")
-    }
+    // {
+    //   label: "Analytics",
+    //   icon: BarChart3,
+    //   color: "bg-purple-500 hover:bg-purple-600",
+    //   onClick: () => router.push("/analytics")
+    // }
   ]
 
   return (
