@@ -8,10 +8,11 @@ import { forgotPasswordSchema, type ForgotPasswordFormData } from "@/lib/schemas
 import { authAPI } from "@/lib/api/client"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { ArrowLeft, Mail, CheckCircle2 } from "lucide-react"
+import { ArrowLeft, Mail } from "lucide-react"
 import Link from "next/link"
 import Image from "next/image"
 import { toast } from "sonner"
+import { getApiErrorMessage } from "@/lib/utils/api-error"
 
 export function ForgotPasswordForm() {
   const router = useRouter()
@@ -43,9 +44,9 @@ export function ForgotPasswordForm() {
       // Redirect to reset-password page with emailOrPhone
       router.push(`/reset-password?email=${encodeURIComponent(data.emailOrPhone)}`)
       
-    } catch (error: any) {
+    } catch (error) {
       console.error("Forgot password error:", error)
-      const errorMessage = error.response?.data?.message || "Failed to send reset instructions. Please try again."
+      const errorMessage = getApiErrorMessage(error, "Failed to send reset instructions. Please try again.")
       toast.error(errorMessage)
     } finally {
       setIsLoading(false)
@@ -75,7 +76,7 @@ export function ForgotPasswordForm() {
           </div>
           <h1 className="text-2xl font-bold text-gray-900 mb-2">Forgot Password?</h1>
           <p className="text-gray-600">
-            Enter your email or phone number and we'll send you instructions to reset your password.
+            Enter your email or phone number and we&apos;ll send you instructions to reset your password.
           </p>
         </div>
 
@@ -150,7 +151,7 @@ export function ForgotPasswordForm() {
 
           {/* Contact Support Link */}
           <div className="text-center mt-6">
-            <Link href="#" className="text-sm text-gray-600 hover:text-gray-900">
+            <Link href="/support" className="text-sm text-gray-600 hover:text-gray-900">
               Having trouble? Contact Support
             </Link>
           </div>

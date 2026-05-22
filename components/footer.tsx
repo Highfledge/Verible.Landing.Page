@@ -1,6 +1,7 @@
 "use client"
 
 import Image from "next/image"
+import Link from "next/link"
 
 export function Footer() {
   return (
@@ -41,7 +42,7 @@ export function Footer() {
               <h3 className="font-semibold text-base sm:text-lg">Resources</h3>
               <ul className="space-y-2 text-xs sm:text-sm">
                 <li><a href="#" className="text-blue-100 hover:text-white transition-colors">Documentation</a></li>
-                <li><a href="#" className="text-blue-100 hover:text-white transition-colors">Support</a></li>
+                <li><Link href="/support" className="text-blue-100 hover:text-white transition-colors">Support</Link></li>
                 <li><a href="#" className="text-blue-100 hover:text-white transition-colors">Trust Center</a></li>
                 <li><a href="#" className="text-blue-100 hover:text-white transition-colors">Blog</a></li>
               </ul>
@@ -52,9 +53,9 @@ export function Footer() {
               <h3 className="font-semibold text-base sm:text-lg">Company</h3>
               <ul className="space-y-2 text-xs sm:text-sm">
                 <li><a href="#" className="text-blue-100 hover:text-white transition-colors">About</a></li>
-                <li><a href="#" className="text-blue-100 hover:text-white transition-colors">Privacy Policy</a></li>
-                <li><a href="#" className="text-blue-100 hover:text-white transition-colors">Terms of Service</a></li>
-                <li><a href="#" className="text-blue-100 hover:text-white transition-colors">Contact</a></li>
+                <li><Link href="/privacy-policy" className="text-blue-100 hover:text-white transition-colors">Privacy Policy</Link></li>
+                <li><Link href="/terms-and-conditions" className="text-blue-100 hover:text-white transition-colors">Terms and Conditions</Link></li>
+                <li><Link href="/support" className="text-blue-100 hover:text-white transition-colors">Contact</Link></li>
               </ul>
             </div>
           </div>

@@ -12,6 +12,7 @@ import { ArrowLeft, Lock, Eye, EyeOff, CheckCircle2, Mail } from "lucide-react"
 import Link from "next/link"
 import Image from "next/image"
 import { toast } from "sonner"
+import { getApiErrorMessage } from "@/lib/utils/api-error"
 
 export function ResetPasswordForm() {
   const router = useRouter()
@@ -77,9 +78,9 @@ export function ResetPasswordForm() {
         router.push("/auth?mode=login")
       }, 2000)
       
-    } catch (error: any) {
+    } catch (error) {
       console.error("Reset password error:", error)
-      const errorMessage = error.response?.data?.message || "Failed to reset password. Please try again."
+      const errorMessage = getApiErrorMessage(error, "Failed to reset password. Please try again.")
       toast.error(errorMessage)
     } finally {
       setIsLoading(false)
@@ -264,7 +265,7 @@ export function ResetPasswordForm() {
 
           {/* Contact Support Link */}
           <div className="text-center mt-6">
-            <Link href="#" className="text-sm text-gray-600 hover:text-gray-900">
+            <Link href="/support" className="text-sm text-gray-600 hover:text-gray-900">
               Having trouble? Contact Support
             </Link>
           </div>

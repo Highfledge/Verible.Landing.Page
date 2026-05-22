@@ -9,11 +9,11 @@ import { authAPI } from "@/lib/api/client"
 import { useAuth } from "@/lib/stores/auth-store"
 import { Button } from "@/components/ui/button"
 import { CodeInput } from "@/components/ui/code-input"
-import { Input } from "@/components/ui/input"
-import { ArrowLeft, Mail, CheckCircle2 } from "lucide-react"
+import { ArrowLeft, CheckCircle2 } from "lucide-react"
 import Link from "next/link"
 import Image from "next/image"
 import { toast } from "sonner"
+import { getApiErrorMessage } from "@/lib/utils/api-error"
 
 export function VerifyEmailForm() {
   const router = useRouter()
@@ -68,9 +68,9 @@ export function VerifyEmailForm() {
       setTimeout(() => {
         router.push("/")
       }, 2000)
-    } catch (error: any) {
+    } catch (error) {
       console.error("Verification error:", error)
-      const errorMessage = error.response?.data?.message || "Invalid verification code. Please try again."
+      const errorMessage = getApiErrorMessage(error, "Invalid verification code. Please try again.")
       toast.error(errorMessage)
       form.resetField("code")
     } finally {
@@ -159,7 +159,7 @@ export function VerifyEmailForm() {
                 </p>
               )}
               <p className="text-sm text-gray-500 text-center mt-4">
-                Didn't receive the code?{" "}
+                Didn&apos;t receive the code?{" "}
                 <button
                   type="button"
                   className="text-blue-600 hover:text-blue-500 font-medium"
@@ -170,8 +170,8 @@ export function VerifyEmailForm() {
                         method: "email"
                       })
                       toast.success("Verification code sent!")
-                    } catch (error: any) {
-                      const errorMessage = error.response?.data?.message || "Failed to resend code. Please try again."
+                    } catch (error) {
+                      const errorMessage = getApiErrorMessage(error, "Failed to resend code. Please try again.")
                       toast.error(errorMessage)
                     }
                   }}
@@ -193,7 +193,7 @@ export function VerifyEmailForm() {
 
           {/* Contact Support Link */}
           <div className="text-center mt-6">
-            <Link href="#" className="text-sm text-gray-600 hover:text-gray-900">
+            <Link href="/support" className="text-sm text-gray-600 hover:text-gray-900">
               Having trouble? Contact Support
             </Link>
           </div>

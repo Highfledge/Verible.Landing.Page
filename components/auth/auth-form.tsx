@@ -14,6 +14,7 @@ import { ArrowLeft, Mail, Lock, Eye, EyeOff, User, Phone } from "lucide-react"
 import Link from "next/link"
 import Image from "next/image"
 import { toast } from "sonner"
+import { getApiErrorMessage } from "@/lib/utils/api-error"
 
 interface AuthFormProps {
   mode: "login" | "signup"
@@ -101,12 +102,12 @@ export function AuthForm({ mode }: AuthFormProps) {
         const emailOrPhone = signupData.email || signupData.phone
         router.push(`/verify?email=${encodeURIComponent(emailOrPhone)}`)
       }
-    } catch (error: any) {
+    } catch (error) {
       console.error("Auth error:", error)
-      const errorMessage = error.response?.data?.message || "An error occurred. Please try again."
+      const errorMessage = getApiErrorMessage(error, "An error occurred. Please try again.")
       
       // Handle unverified account - only for login mode
-      if (mode === "login" && error.response?.data?.message === "Please verify your account") {
+      if (mode === "login" && errorMessage === "Please verify your account") {
         const loginData = data as LoginFormData
         const email = loginData.email
         
@@ -120,7 +121,7 @@ export function AuthForm({ mode }: AuthFormProps) {
           
           // Redirect to verification page
           router.push(`/verify?email=${encodeURIComponent(email)}`)
-        } catch (resendError: any) {
+        } catch (resendError) {
           console.error("Resend error:", resendError)
           toast.error("Failed to resend verification code. Please try again.")
         }
@@ -464,11 +465,11 @@ export function AuthForm({ mode }: AuthFormProps) {
                     />
                     <span className="ml-2 text-sm text-gray-700">
                       I agree to the{" "}
-                      <Link href="#" className="text-blue-600 hover:text-blue-500">
-                        Terms of Service
+                      <Link href="/terms-and-conditions" className="text-blue-600 hover:text-blue-500">
+                        Terms and Conditions
                       </Link>{" "}
                       and{" "}
-                      <Link href="#" className="text-blue-600 hover:text-blue-500">
+                      <Link href="/privacy-policy" className="text-blue-600 hover:text-blue-500">
                         Privacy Policy
                       </Link>
                     </span>
@@ -494,7 +495,7 @@ export function AuthForm({ mode }: AuthFormProps) {
 
           {/* Contact Support Link */}
           <div className="text-center mt-6">
-            <Link href="#" className="text-sm text-gray-600 hover:text-gray-900">
+            <Link href="/support" className="text-sm text-gray-600 hover:text-gray-900">
               Having trouble? Contact Support
             </Link>
           </div>
